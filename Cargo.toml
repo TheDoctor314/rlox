@@ -1,0 +1,11 @@
+[package]
+name = "rlox"
+version = "0.1.0"
+authors = ["TheDoctor314 <darsh.rajan95@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+enum-display-derive = "0.1.1"
+rustyline = "8.0.0"
