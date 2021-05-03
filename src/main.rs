@@ -4,11 +4,11 @@
 #[macro_use]
 extern crate enum_display_derive;
 
-mod tokens;
-mod scanner;
 mod error;
+mod scanner;
+mod tokens;
 
-use std::{path::Path};
+use std::path::Path;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().collect::<Vec<_>>();
@@ -50,7 +50,7 @@ fn run_prompt() -> Result<(), Box<dyn std::error::Error>> {
 }
 fn run(src: &str) -> Result<(), Box<dyn std::error::Error>> {
     let scan = scanner::Scanner::new(src.chars());
-    let tokens_vec: Vec<Result<tokens::Token, _>> = scan.collect();
+    let tokens_vec: Vec<tokens::Token> = scan.map(|x| x.unwrap()).collect();
     println!("{:#?}", tokens_vec);
     Ok(())
 }

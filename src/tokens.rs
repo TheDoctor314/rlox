@@ -67,7 +67,7 @@ impl Token {
         lexeme: String,
         literal: Option<Literal>,
         line: usize,
-        offset: usize
+        offset: usize,
     ) -> Self {
         Self {
             token_type,
@@ -81,7 +81,11 @@ impl Token {
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?} {} {:?}", self.token_type, self.lexeme, self.literal)
+        write!(
+            f,
+            "{:?} {} {:?}",
+            self.token_type, self.lexeme, self.literal
+        )
     }
 }
 
