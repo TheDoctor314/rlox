@@ -113,6 +113,37 @@ impl<'a> Scanner<'a> {
             self.token(u.0, u.1)
         }
     }
+
+    fn string(&mut self) -> Option<Result<Token>> {
+        loop {
+            let last = self.advance_until(&['\n', '"']);
+            match self.peek() {
+                '\0' => todo!(), // return err, implement later
+                // remove trailing slash for multiline strings
+                '"' if last == '\\' => {
+                    self.lexeme.pop();
+                }
+                '"' => break,
+                '\n' => self.line += 1,
+                _ => todo!(), //unexpected
+            };
+
+            self.advance();
+        }
+
+        self.advance();
+
+        // Remove the first and last char (double quotes)
+        let literal = self
+            .lexeme
+            .clone()
+            .chars()
+            .skip(1)
+            .take(self.lexeme.len() - 2)
+            .collect::<String>();
+
+        self.token(TokenType::StringLiteral, Some(Literal::String(literal)))
+    }
 }
 impl<'a> Iterator for Scanner<'a> {
     type Item = Result<Token>;
@@ -166,6 +197,8 @@ impl<'a> Iterator for Scanner<'a> {
                         self.line += 1;
                     }
                 }
+
+                '"' => return self.string(),
 
                 _ => return Some(Err(RloxError::Lexical(self.line))),
             }
