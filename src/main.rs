@@ -6,10 +6,11 @@ extern crate enum_display_derive;
 
 mod tokens;
 mod scanner;
+mod error;
 
-use std::{error, path::Path};
+use std::{path::Path};
 
-fn main() -> Result<(), Box<dyn error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().collect::<Vec<_>>();
     match args.len() {
         1 => run_prompt()?,
@@ -22,7 +23,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     Ok(())
 }
 
-fn run_file<P>(file: &P) -> Result<(), Box<dyn error::Error>>
+fn run_file<P>(file: &P) -> Result<(), Box<dyn std::error::Error>>
 where
     P: AsRef<Path>,
 {
@@ -32,7 +33,7 @@ where
     Ok(())
 }
 
-fn run_prompt() -> Result<(), Box<dyn error::Error>> {
+fn run_prompt() -> Result<(), Box<dyn std::error::Error>> {
     use rustyline::{error, Editor};
     let mut reader = Editor::<()>::new();
     loop {
@@ -47,10 +48,9 @@ fn run_prompt() -> Result<(), Box<dyn error::Error>> {
 
     Ok(())
 }
-fn run(src: &str) -> Result<(), Box<dyn error::Error>> {
-    let tokens = src.split_whitespace();
-    for token in tokens {
-        println!("{:?}", token);
-    }
+fn run(src: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let scan = scanner::Scanner::new(src.chars());
+    let tokens_vec: Vec<Result<tokens::Token, _>> = scan.collect();
+    println!("{:#?}", tokens_vec);
     Ok(())
 }
