@@ -1,9 +1,6 @@
 // temporary allow
 #![allow(dead_code)]
 
-#[macro_use]
-extern crate enum_display_derive;
-
 mod error;
 mod scanner;
 mod tokens;

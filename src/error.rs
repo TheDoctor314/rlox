@@ -1,6 +1,5 @@
-use std::fmt::Display;
-#[derive(Display, Debug)]
+#[derive(Debug)]
 pub(crate) enum RloxError {
     // Returned if scanner encounters an error
-    Lexical(usize),
+    Lexical(usize, String, String),
 }

@@ -1,7 +1,6 @@
 use std::fmt;
 
-use std::fmt::Display;
-#[derive(Display, Debug)]
+#[derive(Debug)]
 pub(crate) enum TokenType {
     // Single Character
     LParen,
@@ -101,7 +100,7 @@ impl Default for Token {
     }
 }
 
-#[derive(Debug, Clone, Display)]
+#[derive(Debug, Clone)]
 pub(crate) enum Literal {
     Nil,
     Boolean(bool),

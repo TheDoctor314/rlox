@@ -91,6 +91,9 @@ impl<'a> Scanner<'a> {
 }
 
 impl<'a> Scanner<'a> {
+    fn err(&self, msg: &str) -> Option<Result<Token>> {
+        Some(Err(RloxError::Lexical(self.line, msg.to_string(), self.lexeme.clone())))
+    }
     fn token(&mut self, token_type: TokenType, literal: Option<Literal>) -> Option<Result<Token>> {
         Some(Ok(Token::new(
             token_type,
@@ -118,14 +121,14 @@ impl<'a> Scanner<'a> {
         loop {
             let last = self.advance_until(&['\n', '"']);
             match self.peek() {
-                '\0' => todo!(), // return err, implement later
+                '\0' => return self.err("Unterminated String"), // return err, implement later
                 // remove trailing slash for multiline strings
                 '"' if last == '\\' => {
                     self.lexeme.pop();
                 }
                 '"' => break,
                 '\n' => self.line += 1,
-                _ => todo!(), //unexpected
+                _ => return self.err("Unexpected character"),
             };
 
             self.advance();
@@ -200,7 +203,7 @@ impl<'a> Iterator for Scanner<'a> {
 
                 '"' => return self.string(),
 
-                _ => return Some(Err(RloxError::Lexical(self.line))),
+                _ => return self.err("Unexpected Character"),
             }
         }
     }
