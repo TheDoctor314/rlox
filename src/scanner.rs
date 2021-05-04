@@ -55,14 +55,24 @@ impl<'a> Scanner<'a> {
         None
     }
 
-    fn peek(&mut self) -> char {
-        if self.queue.len() == 0 {
+    // lookahead arbitrary number of characters
+    fn lookahead(&mut self, n: usize) -> char {
+        assert!(n > 0, "Lookahead must be greater than zero");
+
+        while self.queue.len() < n {
             if let Some(ch) = self.src.next().or(Some('\0')) {
                 self.queue.push_back(ch);
             }
         }
 
-        self.queue[0]
+        self.queue[n-1]
+    }
+
+    fn peek(&mut self) -> char {
+        self.lookahead(1)
+    }
+    fn peek_next(&mut self) -> char {
+        self.lookahead(2)
     }
 
     // Conditional advance(). Advances only when true.
