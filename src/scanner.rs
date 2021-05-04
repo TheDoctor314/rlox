@@ -65,7 +65,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        self.queue[n-1]
+        self.queue[n - 1]
     }
 
     fn peek(&mut self) -> char {
@@ -102,7 +102,11 @@ impl<'a> Scanner<'a> {
 
 impl<'a> Scanner<'a> {
     fn err(&self, msg: &str) -> Option<Result<Token>> {
-        Some(Err(RloxError::Lexical(self.line, msg.to_string(), self.lexeme.clone())))
+        Some(Err(RloxError::Lexical(
+            self.line,
+            msg.to_string(),
+            self.lexeme.clone(),
+        )))
     }
     fn token(&mut self, token_type: TokenType, literal: Option<Literal>) -> Option<Result<Token>> {
         Some(Ok(Token::new(
@@ -157,7 +161,48 @@ impl<'a> Scanner<'a> {
 
         self.token(TokenType::StringLiteral, Some(Literal::String(literal)))
     }
+
+    fn number(&mut self) -> Option<Result<Token>> {
+        while self.peek().is_digit(10) {
+            self.advance();
+        }
+
+        // look for fractional part
+        if self.peek() == '.' && self.peek_next().is_digit(10) {
+            // consume the '.'
+            self.advance();
+
+            while self.peek().is_digit(10) {
+                self.advance();
+            }
+        }
+
+        match self.lexeme.clone().parse::<f64>() {
+            Ok(lit) => return self.token(TokenType::Number, Some(Literal::Number(lit))),
+            Err(_) => self.err("Invalid numeral"),
+        }
+    }
+
+    fn identifer(&mut self) -> Option<Result<Token>> {
+        while is_alphanumeric(self.peek()) {
+            self.advance();
+        }
+        let token_type = TokenType::reserved(self.lexeme.as_ref()).map_or(TokenType::Ident, |t| *t);
+        match token_type {
+            TokenType::Nil => self.token(token_type, Some(Literal::Nil)),
+            TokenType::True | TokenType::False => self.token(
+                token_type,
+                Some(Literal::Boolean(token_type == TokenType::True)),
+            ),
+            _ => self.token(token_type, None),
+        }
+    }
 }
+
+fn is_alphanumeric(ch: char) -> bool {
+    ch.is_ascii_alphanumeric() || ch == '='
+}
+
 impl<'a> Iterator for Scanner<'a> {
     type Item = Result<Token>;
 
@@ -212,6 +257,10 @@ impl<'a> Iterator for Scanner<'a> {
                 }
 
                 '"' => return self.string(),
+
+                c if c.is_digit(10) => return self.number(),
+
+                c if is_alphanumeric(c) => return self.identifer(),
 
                 _ => return self.err("Unexpected Character"),
             }
