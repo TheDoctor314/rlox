@@ -1,11 +1,10 @@
 use std::{collections::VecDeque, str::Chars};
 
 use crate::{
-    error::RloxError,
+    error::{Result, RloxError},
     tokens::{Literal, Token, TokenType},
 };
 
-type Result<T> = std::result::Result<T, RloxError>;
 // Scanner is an iterator which consumes a Chars iterator.
 // It returns a Result<Token>.
 pub(crate) struct Scanner<'a> {

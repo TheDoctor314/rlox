@@ -2,6 +2,8 @@
 #![allow(dead_code)]
 
 mod error;
+mod expr;
+mod parser;
 mod scanner;
 mod tokens;
 

@@ -85,11 +85,11 @@ impl TokenType {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Token {
-    token_type: TokenType,
-    lexeme: String,
-    literal: Option<Literal>,
-    line: usize,
-    offset: usize,
+    pub(crate) token_type: TokenType,
+    pub(crate) lexeme: String,
+    pub(crate) literal: Option<Literal>,
+    pub(crate) line: usize,
+    pub(crate) offset: usize,
 }
 
 impl Token {
