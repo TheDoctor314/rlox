@@ -49,12 +49,15 @@ fn run_prompt() -> Result<(), Box<dyn std::error::Error>> {
 }
 fn run(src: &str) -> Result<(), Box<dyn std::error::Error>> {
     let scan = scanner::Scanner::new(src.chars());
-    let tokens_vec: Vec<tokens::Token> = scan.map(|x| x.unwrap()).collect();
-    println!(
-        "[{}]",
-        tokens_vec
-            .iter()
-            .fold(String::new(), |acc, token| acc + &token.to_string() + ", ")
-    );
+    // let tokens_vec: Vec<tokens::Token> = scan.map(|x| x.unwrap()).collect();
+    // println!(
+    //     "[{}]",
+    //     tokens_vec
+    //         .iter()
+    //         .fold(String::new(), |acc, token| acc + &token.to_string() + ", ")
+    // );
+
+    let expr = parser::Parser::new(scan).parse();
+    dbg!(expr);
     Ok(())
 }
