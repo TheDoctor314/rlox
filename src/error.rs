@@ -3,6 +3,7 @@ pub(crate) enum RloxError {
     // Returned if scanner encounters an error
     Lexical(usize, String, String),
     Parse(usize, String, String),
+    Runtime(usize, String, String),
 }
 
 pub(crate) type Result<T> = std::result::Result<T, RloxError>;
@@ -15,6 +16,9 @@ impl std::fmt::Display for RloxError {
             }
             RloxError::Parse(ref line, ref msg, ref near) => {
                 write!(f, "Parse Error [line {}] {}: {:?}", line, msg, near)
+            }
+            RloxError::Runtime(ref line, ref msg, ref near) => {
+                write!(f, "Runtime Error [line {}] {}: {:?}", line, msg, near)
             }
         }
     }
