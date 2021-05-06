@@ -3,6 +3,8 @@
 
 mod error;
 mod expr;
+mod interpreter;
+mod object;
 mod parser;
 mod scanner;
 mod tokens;
@@ -57,7 +59,11 @@ fn run(src: &str) -> Result<(), Box<dyn std::error::Error>> {
     //         .fold(String::new(), |acc, token| acc + &token.to_string() + ", ")
     // );
 
-    let expr = parser::Parser::new(scan).parse();
-    dbg!(expr);
+    let expr = parser::Parser::new(scan).parse().unwrap();
+    println!("{}", expr);
+
+    let mut interpreter = interpreter::Interpreter {};
+    let ret = interpreter.interpret(&expr);
+    dbg!(ret);
     Ok(())
 }
