@@ -108,6 +108,16 @@ impl Token {
             offset,
         }
     }
+
+    pub(crate) fn in_types(&self, types: &[TokenType]) -> bool {
+        for token in types {
+            if self.token_type == *token {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 impl fmt::Display for Token {
@@ -132,7 +142,7 @@ impl Default for Token {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub(crate) enum Literal {
     Nil,
     Boolean(bool),

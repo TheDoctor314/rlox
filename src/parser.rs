@@ -101,14 +101,7 @@ impl<'a> Parser<'a> {
 impl<'a> Parser<'a> {
     fn check(&mut self, types: &[TokenType]) -> bool {
         match self.src.peek() {
-            Some(&Ok(ref t)) => {
-                for token in types {
-                    if t.token_type == *token {
-                        return true;
-                    }
-                }
-                return false;
-            }
+            Some(&Ok(ref t)) => t.in_types(types),
             _ => false,
         }
     }
