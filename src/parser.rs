@@ -4,6 +4,7 @@ use crate::{
     error::{Result, RloxError},
     expr::Expr,
     scanner::Scanner,
+    stmt::Stmt,
     tokens::{Token, TokenType},
 };
 use TokenType::*;
@@ -18,9 +19,51 @@ impl<'a> Parser<'a> {
             src: src.peekable(),
         }
     }
+}
 
-    pub fn parse(&mut self) -> Result<Expr> {
-        self.expression()
+impl<'a> Iterator for Parser<'a> {
+    type Item = Result<Stmt>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.src.peek().is_none() || self.check_advance(&[Eof]).is_some() {
+            return None;
+        }
+
+        let res = self.statement();
+        if res.is_err() {
+            self.synchronize();
+        }
+
+        Some(res)
+    }
+}
+
+// Statement related methods
+impl<'a> Parser<'a> {
+    fn statement(&mut self) -> Result<Stmt> {
+        let token = self.check_advance(&[Print]);
+        if token.is_none() {
+            return self.expr_statement();
+        }
+
+        let token = token.unwrap()?;
+
+        match token.token_type {
+            Print => self.print_statement(),
+            _ => unreachable!(),
+        }
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt> {
+        let expr = self.expression()?;
+        self.must_advance(&[SemiColon])?;
+        Ok(Stmt::Print(expr))
+    }
+
+    fn expr_statement(&mut self) -> Result<Stmt> {
+        let expr = self.expression()?;
+        self.must_advance(&[SemiColon])?;
+        Ok(Stmt::Expression(expr))
     }
 }
 
