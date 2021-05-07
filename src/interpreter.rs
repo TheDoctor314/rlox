@@ -1,5 +1,6 @@
 use crate::error::{Result, RloxError};
 use crate::expr::{Expr, Visitor as ExprVisitor};
+use crate::stmt::{Stmt, Visitor as StmtVisitor};
 use crate::object::Object;
 use crate::tokens::Token;
 use Object::Literal as ObjLit;
@@ -134,6 +135,23 @@ impl ExprVisitor<Result<Object>> for Interpreter {
     }
 }
 
+impl StmtVisitor<Result<()>> for Interpreter {
+    fn visit_stmt(&mut self, _stmt: &Stmt) -> Result<()> {
+        unimplemented!()
+    }
+
+    fn visit_expr_stmt(&mut self, _stmt: &Stmt, expr: &Expr) -> Result<()> {
+        expr.accept(self).map(|_| ())
+    }
+
+    fn visit_print(&mut self, _stmt: &Stmt, expr: &Expr) -> Result<()> {
+        let val = expr.accept(self)?;
+        println!("{:?}", val);
+
+        Ok(())
+    }
+}
+
 impl Interpreter {
     fn err_near(&self, msg: &str, op: &Token, near: String) -> Result<Object> {
         Err(RloxError::Runtime(op.line, msg.to_string(), near))
@@ -148,7 +166,7 @@ impl Interpreter {
         ))
     }
 
-    pub(crate) fn interpret(&mut self, expr: &Expr) -> Result<Object> {
-        expr.accept(self)
+    pub(crate) fn interpret(&mut self, stmt: &Stmt) -> Result<()> {
+        stmt.accept(self)
     }
 }
