@@ -1,6 +1,7 @@
 // temporary allow
 #![allow(dead_code)]
 
+mod env;
 mod error;
 mod expr;
 mod interpreter;
@@ -11,6 +12,8 @@ mod stmt;
 mod tokens;
 
 use std::path::Path;
+
+use interpreter::Interpreter;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = std::env::args().collect::<Vec<_>>();

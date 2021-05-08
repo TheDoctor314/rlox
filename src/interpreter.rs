@@ -1,11 +1,20 @@
-use crate::error::{Result, RloxError};
-use crate::expr::{Expr, Visitor as ExprVisitor};
-use crate::stmt::{Stmt, Visitor as StmtVisitor};
 use crate::object::Object;
+use crate::stmt::{Stmt, Visitor as StmtVisitor};
 use crate::tokens::Token;
+use crate::{
+    env::Env,
+    error::{Result, RloxError},
+};
+use crate::{
+    expr::{Expr, Visitor as ExprVisitor},
+    tokens::Literal,
+};
 use Object::Literal as ObjLit;
 
-pub(crate) struct Interpreter {}
+pub(crate) struct Interpreter {
+    repl: bool,
+    env: Env,
+}
 
 impl ExprVisitor<Result<Object>> for Interpreter {
     fn visit_expr(&mut self, _expr: &Expr) -> Result<Object> {
@@ -21,7 +30,6 @@ impl ExprVisitor<Result<Object>> for Interpreter {
     }
 
     fn visit_unary(&mut self, _expr: &Expr, op: &Token, rhs: &Expr) -> Result<Object> {
-        use crate::tokens::Literal;
         use crate::tokens::TokenType::*;
         let rhs = rhs.accept(self)?;
 
@@ -38,7 +46,6 @@ impl ExprVisitor<Result<Object>> for Interpreter {
     fn visit_binary(&mut self, _expr: &Expr, lhs: &Expr, op: &Token, rhs: &Expr) -> Result<Object> {
         use std::cmp::Ordering;
 
-        use crate::tokens::Literal;
         use crate::tokens::TokenType::*;
 
         let lhs = lhs.accept(self)?;
@@ -133,6 +140,15 @@ impl ExprVisitor<Result<Object>> for Interpreter {
 
         Ok(ObjLit(result))
     }
+
+    fn visit_assignment(&mut self, _expr: &Expr, id: &Token, val: &Expr) -> Result<Object> {
+        let v = val.accept(self)?;
+        self.env.assign(id, v)
+    }
+
+    fn visit_identifier(&mut self, expr: &Expr, id: &Token) -> Result<Object> {
+        self.lookup_var(id, expr)
+    }
 }
 
 impl StmtVisitor<Result<()>> for Interpreter {
@@ -140,8 +156,12 @@ impl StmtVisitor<Result<()>> for Interpreter {
         unimplemented!()
     }
 
-    fn visit_expr_stmt(&mut self, _stmt: &Stmt, expr: &Expr) -> Result<()> {
-        expr.accept(self).map(|_| ())
+    fn visit_expr_stmt(&mut self, stmt: &Stmt, expr: &Expr) -> Result<()> {
+        if self.repl {
+            self.visit_print(stmt, expr)
+        } else {
+            expr.accept(self).map(|_| ())
+        }
     }
 
     fn visit_print(&mut self, _stmt: &Stmt, expr: &Expr) -> Result<()> {
@@ -150,9 +170,19 @@ impl StmtVisitor<Result<()>> for Interpreter {
 
         Ok(())
     }
+
+    fn visit_decl(&mut self, _stmt: &Stmt, id: &Token, init_expr: Option<&Expr>) -> Result<()> {
+        // Returns a default of Nil if init_expr is None
+        let val = init_expr.map_or_else(|| Ok(ObjLit(Literal::Nil)), |e| e.accept(self))?;
+
+        self.env.define(id, val)
+    }
 }
 
 impl Interpreter {
+    fn lookup_var(&mut self, id: &Token, _expr: &Expr) -> Result<Object> {
+        self.env.get(id)
+    }
     fn err_near(&self, msg: &str, op: &Token, near: String) -> Result<Object> {
         Err(RloxError::Runtime(op.line, msg.to_string(), near))
     }
@@ -168,5 +198,12 @@ impl Interpreter {
 
     pub(crate) fn interpret(&mut self, stmt: &Stmt) -> Result<()> {
         stmt.accept(self)
+    }
+
+    pub fn new(repl: bool) -> Self {
+        Self {
+            repl,
+            env: Env::new(),
+        }
     }
 }
