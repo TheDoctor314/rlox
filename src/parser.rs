@@ -41,7 +41,7 @@ impl<'a> Iterator for Parser<'a> {
 // Statement related methods
 impl<'a> Parser<'a> {
     fn statement(&mut self) -> Result<Stmt> {
-        let token = self.check_advance(&[Print, Var]);
+        let token = self.check_advance(&[Print, Var, LBrace]);
         if token.is_none() {
             return self.expr_statement();
         }
@@ -51,6 +51,7 @@ impl<'a> Parser<'a> {
         match token.token_type {
             Print => self.print_statement(),
             Var => self.decl_statement(),
+            LBrace => self.block_statement(),
             _ => unreachable!(),
         }
     }
@@ -78,6 +79,16 @@ impl<'a> Parser<'a> {
         self.must_advance(&[SemiColon])?;
 
         Ok(Stmt::Declaration(id, Some(Box::new(init_expr))))
+    }
+
+    fn block_statement(&mut self) -> Result<Stmt> {
+        let mut statements = Vec::new();
+
+        while self.check_advance(&[RBrace]).is_none() && self.src.peek().is_some() {
+            statements.push(self.statement()?);
+        }
+
+        Ok(Stmt::Block(statements))
     }
 }
 

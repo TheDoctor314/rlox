@@ -41,7 +41,7 @@ impl Stmt {
             Print(ref expr) => v.visit_print(self, expr),
             Declaration(ref id, ref init) => {
                 v.visit_decl(self, id, init.as_ref().map(|init| init.as_ref()))
-            },
+            }
             Block(ref body) => v.visit_block(self, body),
         }
     }
