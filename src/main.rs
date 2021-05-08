@@ -58,19 +58,22 @@ fn run_prompt() -> Result<(), Box<dyn std::error::Error>> {
 }
 fn run(src: &str, i: &mut Interpreter) -> Result<(), Box<dyn std::error::Error>> {
     let scan = scanner::Scanner::new(src.chars());
-    // let tokens_vec: Vec<tokens::Token> = scan.map(|x| x.unwrap()).collect();
-    // println!(
-    //     "[{}]",
-    //     tokens_vec
-    //         .iter()
-    //         .fold(String::new(), |acc, token| acc + &token.to_string() + ", ")
-    // );
+    //let tokens_vec: Vec<tokens::Token> = scan.map(|x| x.unwrap()).collect();
+    //println!(
+    //    "[{}]",
+    //    tokens_vec
+    //        .iter()
+    //        .fold(String::new(), |acc, token| acc + &token.to_string() + ", ")
+    //);
 
-    let expr = parser::Parser::new(scan).parse().unwrap();
-    println!("{}", expr);
+    let parser = parser::Parser::new(scan);
 
-    let mut interpreter = interpreter::Interpreter {};
-    let ret = interpreter.interpret(&expr);
-    dbg!(ret);
+    for stmt in parser {
+        match stmt {
+            Err(e) => eprintln!("{}", e),
+            Ok(stmt) => i.interpret(&stmt).unwrap(),
+        }
+    }
+
     Ok(())
 }
