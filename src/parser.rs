@@ -41,7 +41,7 @@ impl<'a> Iterator for Parser<'a> {
 // Statement related methods
 impl<'a> Parser<'a> {
     fn statement(&mut self) -> Result<Stmt> {
-        let token = self.check_advance(&[Print, Var, LBrace]);
+        let token = self.check_advance(&[Print, Var, LBrace, If]);
         if token.is_none() {
             return self.expr_statement();
         }
@@ -52,6 +52,7 @@ impl<'a> Parser<'a> {
             Print => self.print_statement(),
             Var => self.decl_statement(),
             LBrace => self.block_statement(),
+            If => self.if_statement(),
             _ => unreachable!(),
         }
     }
@@ -89,6 +90,20 @@ impl<'a> Parser<'a> {
         }
 
         Ok(Stmt::Block(statements))
+    }
+
+    fn if_statement(&mut self) -> Result<Stmt> {
+        self.must_advance(&[LParen])?;
+        let cond = self.expression()?;
+        self.must_advance(&[RParen])?;
+
+        let then_stmt = self.statement()?;
+
+        match self.check_advance(&[Else]) {
+            Some(Err(e)) => Err(e),
+            Some(Ok(_)) => Ok(Stmt::If(cond, Box::new(then_stmt), Some(Box::new(self.statement()?)))),
+            None => Ok(Stmt::If(cond, Box::new(then_stmt), None)),
+        }
     }
 }
 
