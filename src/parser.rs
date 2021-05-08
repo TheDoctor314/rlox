@@ -70,6 +70,7 @@ impl<'a> Parser<'a> {
     fn decl_statement(&mut self) -> Result<Stmt> {
         let id = self.must_advance(&[Ident])?;
         if self.check_advance(&[Equal]).is_none() {
+            self.must_advance(&[SemiColon])?;
             return Ok(Stmt::Declaration(id, None));
         }
 
