@@ -187,6 +187,18 @@ impl StmtVisitor<Result<()>> for Interpreter {
         }
         Ok(())
     }
+
+    fn visit_if(&mut self, _stmt: &Stmt, cond: &Expr, then: &Stmt, else_stmt: Option<&Stmt>) -> Result<()> {
+        if cond.accept(self)?.is_truthy() {
+            return then.accept(self);
+        }
+
+        if let Some(else_stmt) = else_stmt {
+            else_stmt.accept(self)?;
+        }
+
+        Ok(())
+    }
 }
 
 impl Interpreter {
