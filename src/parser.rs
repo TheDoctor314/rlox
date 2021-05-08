@@ -41,7 +41,7 @@ impl<'a> Iterator for Parser<'a> {
 // Statement related methods
 impl<'a> Parser<'a> {
     fn statement(&mut self) -> Result<Stmt> {
-        let token = self.check_advance(&[Print]);
+        let token = self.check_advance(&[Print, Var]);
         if token.is_none() {
             return self.expr_statement();
         }
@@ -50,6 +50,7 @@ impl<'a> Parser<'a> {
 
         match token.token_type {
             Print => self.print_statement(),
+            Var => self.decl_statement(),
             _ => unreachable!(),
         }
     }
@@ -65,14 +66,42 @@ impl<'a> Parser<'a> {
         self.must_advance(&[SemiColon])?;
         Ok(Stmt::Expression(expr))
     }
+
+    fn decl_statement(&mut self) -> Result<Stmt> {
+        let id = self.must_advance(&[Ident])?;
+        if self.check_advance(&[Equal]).is_none() {
+            return Ok(Stmt::Declaration(id, None));
+        }
+
+        let init_expr = self.expression()?;
+        self.must_advance(&[SemiColon])?;
+
+        Ok(Stmt::Declaration(id, Some(Box::new(init_expr))))
+    }
 }
 
 // Expression related methods
 impl<'a> Parser<'a> {
     fn expression(&mut self) -> Result<Expr> {
-        self.equality()
+        self.assignment()
     }
 
+    fn assignment(&mut self) -> Result<Expr> {
+        let expr = self.equality()?;
+
+        if let Some(res) = self.check_advance(&[Equal]) {
+            let equals = res?;
+
+            match expr {
+                Expr::Identifier(token) => {
+                    return Ok(Expr::Assignment(token, Box::new(self.assignment()?)))
+                }
+                _ => return Err(Parser::unexpected(&equals)),
+            }
+        }
+
+        Ok(expr)
+    }
     fn equality(&mut self) -> Result<Expr> {
         let mut expr = self.comparison()?;
 
@@ -122,8 +151,11 @@ impl<'a> Parser<'a> {
     }
 
     fn primary(&mut self) -> Result<Expr> {
-        if let Some(Ok(token)) = self.check_advance(&[Nil, False, True, Number, StringLiteral]) {
+        if let Some(Ok(token)) =
+            self.check_advance(&[Nil, False, True, Number, StringLiteral, Ident])
+        {
             return match token.token_type {
+                Ident => Ok(Expr::Identifier(token)),
                 Nil | False | True | Number | StringLiteral => Ok(Expr::Literal(token)),
                 _ => Err(Parser::unexpected(&token)),
             };
