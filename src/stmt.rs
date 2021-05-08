@@ -6,6 +6,7 @@ pub(crate) enum Stmt {
     Expression(Expr),
     Print(Expr),
     Declaration(Token, Option<Box<Expr>>),
+    Block(Vec<Stmt>),
 }
 
 // Add more functions as variants are added to Stmt
@@ -25,6 +26,10 @@ pub(crate) trait Visitor<T> {
     fn visit_decl(&mut self, _stmt: &Stmt, _id: &Token, _init_expr: Option<&Expr>) -> T {
         self.visit_stmt(_stmt)
     }
+
+    fn visit_block(&mut self, _stmt: &Stmt, _body: &[Stmt]) -> T {
+        self.visit_stmt(_stmt)
+    }
 }
 
 impl Stmt {
@@ -36,7 +41,8 @@ impl Stmt {
             Print(ref expr) => v.visit_print(self, expr),
             Declaration(ref id, ref init) => {
                 v.visit_decl(self, id, init.as_ref().map(|init| init.as_ref()))
-            }
+            },
+            Block(ref body) => v.visit_block(self, body),
         }
     }
 }
