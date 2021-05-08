@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::object::Object;
 use crate::stmt::{Stmt, Visitor as StmtVisitor};
 use crate::tokens::Token;
@@ -13,7 +15,7 @@ use Object::Literal as ObjLit;
 
 pub(crate) struct Interpreter {
     repl: bool,
-    env: Env,
+    env: Rc<Env>,
 }
 
 impl ExprVisitor<Result<Object>> for Interpreter {
@@ -177,9 +179,24 @@ impl StmtVisitor<Result<()>> for Interpreter {
 
         self.env.define(id, val)
     }
+
+    fn visit_block(&mut self, _stmt: &Stmt, body: &[Stmt]) -> Result<()> {
+        let mut new_scope = self.create_scope();
+        for stmt in body {
+            stmt.accept(&mut new_scope)?;
+        }
+        Ok(())
+    }
 }
 
 impl Interpreter {
+    fn create_scope(&self) -> Self {
+        Self {
+            repl: false,
+            env: Env::from(&self.env),
+        }
+    }
+
     fn lookup_var(&mut self, id: &Token, _expr: &Expr) -> Result<Object> {
         self.env.get(id)
     }
