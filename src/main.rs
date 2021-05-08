@@ -33,7 +33,8 @@ where
     P: AsRef<Path>,
 {
     let src = std::fs::read_to_string(file)?;
-    run(&src)?;
+    let mut i = Interpreter::new(false);
+    run(&src, &mut i)?;
 
     Ok(())
 }
@@ -41,10 +42,12 @@ where
 fn run_prompt() -> Result<(), Box<dyn std::error::Error>> {
     use rustyline::{error, Editor};
     let mut reader = Editor::<()>::new();
+    let mut i = Interpreter::new(true);
+
     loop {
         let line = reader.readline(">> ");
         match line {
-            Ok(line) => run(&line)?,
+            Ok(line) => run(&line, &mut i)?,
             Err(error::ReadlineError::Interrupted) => break,
             Err(error::ReadlineError::Eof) => break,
             Err(err) => return Err(err.into()),
@@ -53,7 +56,7 @@ fn run_prompt() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-fn run(src: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn run(src: &str, i: &mut Interpreter) -> Result<(), Box<dyn std::error::Error>> {
     let scan = scanner::Scanner::new(src.chars());
     // let tokens_vec: Vec<tokens::Token> = scan.map(|x| x.unwrap()).collect();
     // println!(
