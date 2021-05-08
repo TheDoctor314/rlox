@@ -1,6 +1,6 @@
 use crate::tokens;
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub(crate) enum Object {
     Literal(tokens::Literal),
 }

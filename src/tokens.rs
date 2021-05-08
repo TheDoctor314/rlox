@@ -116,7 +116,7 @@ impl Token {
             }
         }
 
-        return false;
+        false
     }
 }
 

@@ -177,7 +177,7 @@ impl<'a> Scanner<'a> {
         }
 
         match self.lexeme.clone().parse::<f64>() {
-            Ok(lit) => return self.token(TokenType::Number, Some(Literal::Number(lit))),
+            Ok(lit) => self.token(TokenType::Number, Some(Literal::Number(lit))),
             Err(_) => self.err("Invalid numeral"),
         }
     }
