@@ -4,6 +4,7 @@ pub(crate) enum RloxError {
     Lexical(usize, String, String),
     Parse(usize, String, String),
     Runtime(usize, String, String),
+    Break(usize),
 }
 
 pub(crate) type Result<T> = std::result::Result<T, RloxError>;
@@ -20,6 +21,7 @@ impl std::fmt::Display for RloxError {
             RloxError::Runtime(ref line, ref msg, ref near) => {
                 write!(f, "Runtime Error [line {}] {}: {:?}", line, msg, near)
             }
+            RloxError::Break(ref line) => write!(f, "Error [line {}]: Unexpected break statement", line),
         }
     }
 }
