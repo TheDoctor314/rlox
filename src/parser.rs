@@ -11,12 +11,14 @@ use TokenType::*;
 
 pub(crate) struct Parser<'a> {
     src: Peekable<Scanner<'a>>,
+    loop_depth: usize,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(src: Scanner<'a>) -> Self {
         Self {
             src: src.peekable(),
+            loop_depth: 0,
         }
     }
 }
@@ -114,11 +116,13 @@ impl<'a> Parser<'a> {
     }
 
     fn while_statement(&mut self) -> Result<Stmt> {
+        self.loop_depth += 1;
         self.must_advance(&[LParen])?;
         let cond = self.expression()?;
         self.must_advance(&[RParen])?;
 
         let body = self.statement()?;
+        self.loop_depth -= 1;
 
         Ok(Stmt::While(cond, Box::new(body)))
     }
@@ -173,8 +177,12 @@ impl<'a> Parser<'a> {
     }
 
     fn break_statement(&mut self, token: Token) -> Result<Stmt> {
-        self.must_advance(&[SemiColon])?;
-        todo!();
+        if self.loop_depth > 0 {
+            self.must_advance(&[SemiColon])?;
+            return Ok(Stmt::Break(token));
+        }
+
+        Err(RloxError::Break(token.line))
     }
 }
 
