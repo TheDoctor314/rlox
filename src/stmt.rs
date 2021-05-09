@@ -8,6 +8,7 @@ pub(crate) enum Stmt {
     Declaration(Token, Option<Box<Expr>>),
     Block(Vec<Stmt>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
+    While(Expr, Box<Stmt>),
 }
 
 // Add more functions as variants are added to Stmt
@@ -35,6 +36,10 @@ pub(crate) trait Visitor<T> {
     fn visit_if(&mut self, _stmt: &Stmt, _cond: &Expr, _then: &Stmt, _else: Option<&Stmt>) -> T {
         self.visit_stmt(_stmt)
     }
+
+    fn visit_while(&mut self, _stmt: &Stmt, _cond: &Expr, _body: &Stmt) -> T {
+        self.visit_stmt(_stmt)
+    }
 }
 
 impl Stmt {
@@ -48,9 +53,13 @@ impl Stmt {
                 v.visit_decl(self, id, init.as_ref().map(|init| init.as_ref()))
             }
             Block(ref body) => v.visit_block(self, body),
-            If(ref cond, ref then, ref else_stmt) => {
-                v.visit_if(self, cond, then.as_ref(), else_stmt.as_ref().map(|e| e.as_ref()))
-            }
+            If(ref cond, ref then, ref else_stmt) => v.visit_if(
+                self,
+                cond,
+                then.as_ref(),
+                else_stmt.as_ref().map(|e| e.as_ref()),
+            ),
+            While(ref cond, ref body) => v.visit_while(self, cond, body),
         }
     }
 }
