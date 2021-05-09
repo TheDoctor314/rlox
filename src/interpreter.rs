@@ -227,10 +227,19 @@ impl StmtVisitor<Result<()>> for Interpreter {
 
     fn visit_while(&mut self, _stmt: &Stmt, cond: &Expr, body: &Stmt) -> Result<()> {
         while cond.accept(self)?.is_truthy() {
-            body.accept(self)?;
+            match body.accept(self) {
+                Err(RloxError::Break(_)) => return Ok(()),
+                Err(e) => return Err(e),
+                _ => (),
+            };
         }
 
         Ok(())
+    }
+
+    fn visit_break(&mut self, _stmt: &Stmt, token: &Token) -> Result<()> {
+        //It should be an error to visit a break statement
+        Err(RloxError::Break(token.line))
     }
 }
 
