@@ -114,7 +114,7 @@ impl<'a> Parser<'a> {
     }
 
     fn assignment(&mut self) -> Result<Expr> {
-        let expr = self.equality()?;
+        let expr = self.logical_or()?;
 
         if let Some(res) = self.check_advance(&[Equal]) {
             let equals = res?;
@@ -129,6 +129,27 @@ impl<'a> Parser<'a> {
 
         Ok(expr)
     }
+
+    fn logical_or(&mut self) -> Result<Expr> {
+        let mut expr = self.logical_and()?;
+
+        while let Some(op) = self.check_advance(&[Or]) {
+            expr = Expr::Logical(Box::new(expr), op?, Box::new(self.logical_and()?));
+        }
+
+        Ok(expr)
+    }
+
+    fn logical_and(&mut self) -> Result<Expr> {
+        let mut expr = self.equality()?;
+
+        while let Some(op) = self.check_advance(&[And]) {
+            expr = Expr::Logical(Box::new(expr), op?, Box::new(self.equality()?));
+        }
+
+        Ok(expr)
+    }
+
     fn equality(&mut self) -> Result<Expr> {
         let mut expr = self.comparison()?;
 
