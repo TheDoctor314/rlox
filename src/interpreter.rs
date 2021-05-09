@@ -27,7 +27,13 @@ impl ExprVisitor<Result<Object>> for Interpreter {
         Ok(ObjLit(lit.literal.as_ref().unwrap().clone()))
     }
 
-    fn visit_logical(&mut self, _expr: &Expr, lhs: &Expr, op: &Token, rhs: &Expr) -> Result<Object> {
+    fn visit_logical(
+        &mut self,
+        _expr: &Expr,
+        lhs: &Expr,
+        op: &Token,
+        rhs: &Expr,
+    ) -> Result<Object> {
         use crate::tokens::TokenType::*;
 
         let lhs = lhs.accept(self)?;
@@ -201,13 +207,27 @@ impl StmtVisitor<Result<()>> for Interpreter {
         Ok(())
     }
 
-    fn visit_if(&mut self, _stmt: &Stmt, cond: &Expr, then: &Stmt, else_stmt: Option<&Stmt>) -> Result<()> {
+    fn visit_if(
+        &mut self,
+        _stmt: &Stmt,
+        cond: &Expr,
+        then: &Stmt,
+        else_stmt: Option<&Stmt>,
+    ) -> Result<()> {
         if cond.accept(self)?.is_truthy() {
             return then.accept(self);
         }
 
         if let Some(else_stmt) = else_stmt {
             else_stmt.accept(self)?;
+        }
+
+        Ok(())
+    }
+
+    fn visit_while(&mut self, _stmt: &Stmt, cond: &Expr, body: &Stmt) -> Result<()> {
+        while cond.accept(self)?.is_truthy() {
+            body.accept(self)?;
         }
 
         Ok(())
