@@ -25,7 +25,7 @@ pub(crate) trait Visitor<T> {
         self.visit_expr(_expr)
     }
 
-    fn visit_logical(&mut self, _expr: &Expr, _lhs: &Expr, _op: &Token, _rhs: &Expr) -> T{
+    fn visit_logical(&mut self, _expr: &Expr, _lhs: &Expr, _op: &Token, _rhs: &Expr) -> T {
         self.visit_expr(_expr)
     }
 

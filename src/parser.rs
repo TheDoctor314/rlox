@@ -5,7 +5,7 @@ use crate::{
     expr::Expr,
     scanner::Scanner,
     stmt::Stmt,
-    tokens::{Token, TokenType},
+    tokens::{Literal, Token, TokenType},
 };
 use TokenType::*;
 
@@ -41,7 +41,7 @@ impl<'a> Iterator for Parser<'a> {
 // Statement related methods
 impl<'a> Parser<'a> {
     fn statement(&mut self) -> Result<Stmt> {
-        let token = self.check_advance(&[Print, Var, LBrace, If]);
+        let token = self.check_advance(&[Print, Var, LBrace, If, While, For, Break]);
         if token.is_none() {
             return self.expr_statement();
         }
@@ -53,6 +53,9 @@ impl<'a> Parser<'a> {
             Var => self.decl_statement(),
             LBrace => self.block_statement(),
             If => self.if_statement(),
+            While => self.while_statement(),
+            For => self.for_statement(),
+            Break => self.break_statement(token),
             _ => unreachable!(),
         }
     }
@@ -101,9 +104,77 @@ impl<'a> Parser<'a> {
 
         match self.check_advance(&[Else]) {
             Some(Err(e)) => Err(e),
-            Some(Ok(_)) => Ok(Stmt::If(cond, Box::new(then_stmt), Some(Box::new(self.statement()?)))),
+            Some(Ok(_)) => Ok(Stmt::If(
+                cond,
+                Box::new(then_stmt),
+                Some(Box::new(self.statement()?)),
+            )),
             None => Ok(Stmt::If(cond, Box::new(then_stmt), None)),
         }
+    }
+
+    fn while_statement(&mut self) -> Result<Stmt> {
+        self.must_advance(&[LParen])?;
+        let cond = self.expression()?;
+        self.must_advance(&[RParen])?;
+
+        let body = self.statement()?;
+
+        Ok(Stmt::While(cond, Box::new(body)))
+    }
+
+    fn for_statement(&mut self) -> Result<Stmt> {
+        self.must_advance(&[LParen])?;
+
+        let init = match self.check_advance(&[SemiColon, Var]) {
+            None => Some(self.expr_statement()?),
+            Some(t) => match t?.token_type {
+                SemiColon => None,
+                Var => Some(self.decl_statement()?),
+                _ => unreachable!(),
+            },
+        };
+
+        let cond = match self.check_advance(&[SemiColon]) {
+            Some(t) => Expr::Literal(Token {
+                token_type: True,
+                lexeme: "true".to_string(),
+                literal: Some(Literal::Boolean(true)),
+                ..t?
+            }),
+            None => {
+                let expr = self.expression()?;
+                self.must_advance(&[SemiColon])?;
+                expr
+            }
+        };
+
+        let inc = match self.check_advance(&[RParen]) {
+            None => {
+                let expr = self.expression()?;
+                self.must_advance(&[RParen])?;
+                Some(Stmt::Expression(expr))
+            }
+            Some(_) => None,
+        };
+
+        let mut body = self.statement()?;
+        if inc.is_some() {
+            body = Stmt::Block(vec![body, inc.unwrap()]);
+        }
+
+        body = Stmt::While(cond, Box::new(body));
+
+        if init.is_some() {
+            body = Stmt::Block(vec![init.unwrap(), body]);
+        }
+
+        Ok(body)
+    }
+
+    fn break_statement(&mut self, token: Token) -> Result<Stmt> {
+        self.must_advance(&[SemiColon])?;
+        todo!();
     }
 }
 
