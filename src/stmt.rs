@@ -9,6 +9,7 @@ pub(crate) enum Stmt {
     Block(Vec<Stmt>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     While(Expr, Box<Stmt>),
+    Break(Token),
 }
 
 // Add more functions as variants are added to Stmt
@@ -40,6 +41,10 @@ pub(crate) trait Visitor<T> {
     fn visit_while(&mut self, _stmt: &Stmt, _cond: &Expr, _body: &Stmt) -> T {
         self.visit_stmt(_stmt)
     }
+
+    fn visit_break(&mut self, _stmt: &Stmt, _token: &Token) -> T {
+        self.visit_stmt(_stmt)
+    }
 }
 
 impl Stmt {
@@ -60,6 +65,7 @@ impl Stmt {
                 else_stmt.as_ref().map(|e| e.as_ref()),
             ),
             While(ref cond, ref body) => v.visit_while(self, cond, body),
+            Break(ref token) => v.visit_break(self, token),
         }
     }
 }
