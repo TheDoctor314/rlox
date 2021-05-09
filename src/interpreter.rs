@@ -27,6 +27,19 @@ impl ExprVisitor<Result<Object>> for Interpreter {
         Ok(ObjLit(lit.literal.as_ref().unwrap().clone()))
     }
 
+    fn visit_logical(&mut self, _expr: &Expr, lhs: &Expr, op: &Token, rhs: &Expr) -> Result<Object> {
+        use crate::tokens::TokenType::*;
+
+        let lhs = lhs.accept(self)?;
+
+        // Lox returns the operands themselves
+        match op.token_type {
+            Or if lhs.is_truthy() => Ok(lhs),
+            And if !lhs.is_truthy() => Ok(lhs),
+            _ => rhs.accept(self),
+        }
+    }
+
     fn visit_grouping(&mut self, _expr: &Expr, group: &Expr) -> Result<Object> {
         group.accept(self)
     }
