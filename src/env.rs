@@ -32,13 +32,14 @@ impl Env {
         Ok(())
     }
 
+    // recursive; if not in current scope then looks in parent scope
     pub fn assign(&self, id: &Token, val: Object) -> Result<Object> {
         let name = &id.lexeme;
         let mut values = self.values.borrow_mut();
 
         if !values.contains_key(name) {
             if let Some(ref parent) = self.parent {
-                return parent.get(id);
+                return parent.assign(id, val);
             }
 
             return Err(RloxError::Runtime(
