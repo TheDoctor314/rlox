@@ -4,6 +4,7 @@ use crate::tokens::Token;
 pub(crate) enum Expr {
     Identifier(Token),
     Literal(Token),
+    Logical(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
     Unary(Token, Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
@@ -21,6 +22,10 @@ pub(crate) trait Visitor<T> {
     }
 
     fn visit_literal(&mut self, _expr: &Expr, _lit: &Token) -> T {
+        self.visit_expr(_expr)
+    }
+
+    fn visit_logical(&mut self, _expr: &Expr, _lhs: &Expr, _op: &Token, _rhs: &Expr) -> T{
         self.visit_expr(_expr)
     }
 
@@ -48,6 +53,7 @@ impl Expr {
         match self {
             Identifier(ref id) => v.visit_identifier(self, id),
             Literal(ref lit) => v.visit_literal(self, lit),
+            Logical(ref lhs, ref op, ref rhs) => v.visit_logical(self, lhs, op, rhs),
             Grouping(ref group) => v.visit_grouping(self, group),
             Unary(ref op, ref rhs) => v.visit_unary(self, op, rhs),
             Binary(ref lhs, ref op, ref rhs) => v.visit_binary(self, lhs, op, rhs),
@@ -61,6 +67,7 @@ impl std::fmt::Display for Expr {
         match self {
             Expr::Identifier(ref id) => write!(f, "{}", id),
             Expr::Literal(ref lit) => write!(f, "{}", lit),
+            Expr::Logical(ref lhs, ref op, ref rhs) => write!(f, "({} {} {})", op, lhs, rhs),
             Expr::Grouping(ref group) => write!(f, "(group {})", group),
             Expr::Unary(ref op, ref rhs) => write!(f, "({} {})", op, rhs),
             Expr::Binary(ref lhs, ref op, ref rhs) => write!(f, "({} {} {})", op, lhs, rhs),
