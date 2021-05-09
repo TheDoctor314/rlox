@@ -20,6 +20,7 @@ lazy_static! {
         ("true", TokenType::True),
         ("var", TokenType::Var),
         ("while", TokenType::While),
+        ("break", TokenType::Break),
     ]
     .iter()
     .cloned()
@@ -73,6 +74,7 @@ pub(crate) enum TokenType {
     True,
     Var,
     While,
+    Break,
 
     Eof,
 }
@@ -202,6 +204,7 @@ impl std::fmt::Display for TokenType {
             TokenType::True => write!(f, "TRUE"),
             TokenType::Var => write!(f, "VAR"),
             TokenType::While => write!(f, "WHILE"),
+            TokenType::Break => write!(f, "BREAK"),
             TokenType::Eof => write!(f, "EOF"),
         }
     }
