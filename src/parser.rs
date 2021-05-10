@@ -43,7 +43,7 @@ impl<'a> Iterator for Parser<'a> {
 // Statement related methods
 impl<'a> Parser<'a> {
     fn statement(&mut self) -> Result<Stmt> {
-        let token = self.check_advance(&[Print, Var, LBrace, If, While, For, Break]);
+        let token = self.check_advance(&[Print, Var, LBrace, If, While, For, Break, Fun]);
         if token.is_none() {
             return self.expr_statement();
         }
@@ -58,6 +58,7 @@ impl<'a> Parser<'a> {
             While => self.while_statement(),
             For => self.for_statement(),
             Break => self.break_statement(token),
+            Fun => self.function(),
             _ => unreachable!(),
         }
     }
@@ -184,6 +185,40 @@ impl<'a> Parser<'a> {
 
         Err(RloxError::Break(token.line))
     }
+
+    fn function(&mut self) -> Result<Stmt> {
+        use crate::stmt::FUNCTION_MAX_ARGS;
+        let name = self.must_advance(&[Ident])?;
+        self.must_advance(&[LParen])?;
+
+        let mut params = Vec::new();
+        if !self.check(&[RParen]) {
+            loop {
+                if params.len() >= FUNCTION_MAX_ARGS {
+                    return Err(RloxError::Parse(
+                        name.line,
+                        format!("Cannot have more than {} parameters", FUNCTION_MAX_ARGS),
+                        name.lexeme,
+                    ));
+                }
+
+                params.push(self.must_advance(&[Ident])?);
+
+                if self.check_advance(&[Comma]).is_none() {
+                    break;
+                }
+            }
+        }
+
+        self.must_advance(&[RParen])?;
+        self.must_advance(&[LBrace])?;
+
+        Ok(Stmt::Function(
+            name,
+            params,
+            Box::new(self.block_statement()?),
+        ))
+    }
 }
 
 // Expression related methods
@@ -274,7 +309,48 @@ impl<'a> Parser<'a> {
             return Ok(Expr::Unary(op?, Box::new(self.unary()?)));
         }
 
-        self.primary()
+        self.call()
+    }
+
+    fn call(&mut self) -> Result<Expr> {
+        let mut expr = self.primary()?;
+
+        loop {
+            expr = match self.check_advance(&[LParen]) {
+                Some(Err(e)) => return Err(e),
+                Some(Ok(_)) => self.finish_call(expr)?,
+                None => break,
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn finish_call(&mut self, callee: Expr) -> Result<Expr> {
+        let mut args = Vec::new();
+        if !self.check(&[RParen]) {
+            loop {
+                if args.len() >= crate::stmt::FUNCTION_MAX_ARGS {
+                    return Err(RloxError::Parse(
+                        0,
+                        "Can't have more than 255 arguments".to_string(),
+                        "".to_string(),
+                    ));
+                }
+                args.push(self.expression()?);
+
+                match self.check_advance(&[Comma]) {
+                    Some(token) => token?,
+                    None => break,
+                };
+            }
+        }
+
+        Ok(Expr::Call(
+            Box::new(callee),
+            self.must_advance(&[RParen])?,
+            args,
+        ))
     }
 
     fn primary(&mut self) -> Result<Expr> {

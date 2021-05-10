@@ -10,6 +10,7 @@ mod parser;
 mod scanner;
 mod stmt;
 mod tokens;
+mod functions;
 
 use std::path::Path;
 
