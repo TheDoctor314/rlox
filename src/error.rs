@@ -21,7 +21,9 @@ impl std::fmt::Display for RloxError {
             RloxError::Runtime(ref line, ref msg, ref near) => {
                 write!(f, "Runtime Error [line {}] {}: {:?}", line, msg, near)
             }
-            RloxError::Break(ref line) => write!(f, "Error [line {}]: Unexpected break statement", line),
+            RloxError::Break(ref line) => {
+                write!(f, "Error [line {}]: Unexpected break statement", line)
+            }
         }
     }
 }

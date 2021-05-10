@@ -4,13 +4,13 @@
 mod env;
 mod error;
 mod expr;
+mod functions;
 mod interpreter;
 mod object;
 mod parser;
 mod scanner;
 mod stmt;
 mod tokens;
-mod functions;
 
 use std::path::Path;
 

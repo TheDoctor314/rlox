@@ -63,7 +63,9 @@ impl Expr {
             Unary(ref op, ref rhs) => v.visit_unary(self, op, rhs),
             Binary(ref lhs, ref op, ref rhs) => v.visit_binary(self, lhs, op, rhs),
             Assignment(ref id, ref val) => v.visit_assignment(self, id, val),
-            Call(ref callee, ref paren, ref args) => v.visit_call(self, callee.as_ref(), paren, args),
+            Call(ref callee, ref paren, ref args) => {
+                v.visit_call(self, callee.as_ref(), paren, args)
+            }
         }
     }
 }

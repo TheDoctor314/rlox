@@ -1,5 +1,5 @@
-use crate::tokens;
 use crate::functions::Callable;
+use crate::tokens;
 
 #[derive(Debug, Clone)]
 pub(crate) enum Object {

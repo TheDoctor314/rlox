@@ -1,12 +1,6 @@
 use std::rc::Rc;
 
-use crate::{
-    error::Result,
-    interpreter::Interpreter,
-    object::Object,
-    stmt::Stmt,
-    tokens::Token,
-};
+use crate::{error::Result, interpreter::Interpreter, object::Object, stmt::Stmt, tokens::Token};
 
 #[derive(Debug, Clone)]
 pub(crate) enum Callable {
@@ -54,7 +48,7 @@ impl LoxFunction {
 
         let env = Rc::clone(&interpreter.env);
 
-        for(param, arg) in self.params.iter().zip(args.into_iter()) {
+        for (param, arg) in self.params.iter().zip(args.into_iter()) {
             env.define(param, arg.clone())?;
         }
 
