@@ -13,6 +13,7 @@ pub(crate) enum Stmt {
     While(Expr, Box<Stmt>),
     Break(Token),
     Function(Token, Vec<Token>, Box<Stmt>),
+    Return(Token, Option<Box<Expr>>),
 }
 
 // Add more functions as variants are added to Stmt
@@ -52,6 +53,10 @@ pub(crate) trait Visitor<T> {
     fn visit_func(&mut self, _stmt: &Stmt, _name: &Token, _params: &[Token], _body: &Stmt) -> T {
         self.visit_stmt(_stmt)
     }
+
+    fn visit_return(&mut self, _stmt: &Stmt, _keyword: &Token, _val: Option<&Expr>) -> T {
+        self.visit_stmt(_stmt)
+    }
 }
 
 impl Stmt {
@@ -74,6 +79,9 @@ impl Stmt {
             While(ref cond, ref body) => v.visit_while(self, cond, body),
             Break(ref token) => v.visit_break(self, token),
             Function(ref name, ref params, ref body) => v.visit_func(self, name, params, body),
+            Return(ref token, ref val) => {
+                v.visit_return(self, token, val.as_ref().map(|val| val.as_ref()))
+            }
         }
     }
 }
