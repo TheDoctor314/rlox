@@ -56,6 +56,7 @@ impl LoxFunction {
 
         match self.body.accept(&mut interpreter.with_env(env)) {
             Ok(()) => Ok(Object::Literal(Nil)),
+            Err(RloxError::Return(_, ret)) => Ok(ret),
             Err(e) => Err(e),
         }
     }

@@ -267,7 +267,7 @@ impl StmtVisitor<Result<()>> for Interpreter {
         params: &[Token],
         body: &Stmt,
     ) -> Result<()> {
-        let f = Callable::new(params, body);
+        let f = Callable::new(&self.env, params, body);
         self.env.define(name, Object::Func(f))
     }
 
