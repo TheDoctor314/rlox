@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{error::Result, interpreter::Interpreter, object::Object, stmt::Stmt, tokens::Token};
+use crate::{env::Env, error::{Result, RloxError}, interpreter::Interpreter, object::Object, stmt::Stmt, tokens::Token};
 
 #[derive(Debug, Clone)]
 pub(crate) enum Callable {
@@ -8,8 +8,8 @@ pub(crate) enum Callable {
 }
 
 impl Callable {
-    pub fn new(params: &[Token], body: &Stmt) -> Self {
-        Callable::Runtime(LoxFunction::new(params, body))
+    pub fn new(env: &Rc<Env>, params: &[Token], body: &Stmt) -> Self {
+        Callable::Runtime(LoxFunction::new(env, params, body))
     }
 
     pub fn arity(&self) -> usize {
@@ -27,13 +27,15 @@ impl Callable {
 
 #[derive(Debug, Clone)]
 pub(crate) struct LoxFunction {
+    closure: Rc<Env>,
     params: Vec<Token>,
     body: Box<Stmt>,
 }
 
 impl LoxFunction {
-    pub fn new(params: &[Token], body: &Stmt) -> Self {
+    pub fn new(scope: &Rc<Env>, params: &[Token], body: &Stmt) -> Self {
         Self {
+            closure: Rc::clone(scope),
             params: params.to_vec(),
             body: Box::new(body.clone()),
         }
@@ -46,7 +48,7 @@ impl LoxFunction {
     pub fn call(&self, interpreter: &Interpreter, args: &[Object]) -> Result<Object> {
         use crate::tokens::Literal::Nil;
 
-        let env = Rc::clone(&interpreter.env);
+        let env = Rc::clone(&self.closure);
 
         for (param, arg) in self.params.iter().zip(args.into_iter()) {
             env.define(param, arg.clone())?;

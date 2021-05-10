@@ -5,6 +5,7 @@ use crate::error::{Result, RloxError};
 use crate::object::Object;
 use crate::tokens::Token;
 
+#[derive(Debug)]
 pub(crate) struct Env {
     parent: Option<Rc<Env>>,
     values: RefCell<HashMap<String, Object>>,
