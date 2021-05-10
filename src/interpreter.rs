@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use crate::functions::Callable;
 use crate::object::Object;
 use crate::stmt::{Stmt, Visitor as StmtVisitor};
 use crate::tokens::Token;
@@ -14,8 +15,8 @@ use crate::{
 use Object::Literal as ObjLit;
 
 pub(crate) struct Interpreter {
-    repl: bool,
-    env: Rc<Env>,
+    pub(crate) repl: bool,
+    pub(crate) env: Rc<Env>,
 }
 
 impl ExprVisitor<Result<Object>> for Interpreter {
@@ -170,6 +171,23 @@ impl ExprVisitor<Result<Object>> for Interpreter {
     fn visit_identifier(&mut self, expr: &Expr, id: &Token) -> Result<Object> {
         self.lookup_var(id, expr)
     }
+
+    fn visit_call(
+        &mut self,
+        _expr: &Expr,
+        callee: &Expr,
+        paren: &Token,
+        args: &[Expr],
+    ) -> Result<Object> {
+        match callee.accept(self)? {
+            Object::Func(ref f) => self.call_dispatch(f, paren, args),
+            x => self.err_near(
+                "Can only call functions and classes",
+                paren,
+                format!("{:?}", x),
+            ),
+        }
+    }
 }
 
 impl StmtVisitor<Result<()>> for Interpreter {
@@ -241,6 +259,17 @@ impl StmtVisitor<Result<()>> for Interpreter {
         //It should be an error to visit a break statement
         Err(RloxError::Break(token.line))
     }
+
+    fn visit_func(
+        &mut self,
+        _stmt: &Stmt,
+        name: &Token,
+        params: &[Token],
+        body: &Stmt,
+    ) -> Result<()> {
+        let f = Callable::new(params, body);
+        self.env.define(name, Object::Func(f))
+    }
 }
 
 impl Interpreter {
@@ -267,6 +296,27 @@ impl Interpreter {
         ))
     }
 
+    fn call_dispatch(&mut self, callee: &Callable, paren: &Token, args: &[Expr]) -> Result<Object> {
+        if callee.arity() != args.len() {
+            return self.err_near(
+                &format!(
+                    "expected {} arguments but got {}",
+                    callee.arity(),
+                    args.len()
+                ),
+                paren,
+                "".to_string(),
+            );
+        }
+
+        let mut params = Vec::with_capacity(args.len());
+        for arg in args {
+            params.push(arg.accept(self)?);
+        }
+
+        callee.call(self, &params)
+    }
+
     pub(crate) fn interpret(&mut self, stmt: &Stmt) -> Result<()> {
         stmt.accept(self)
     }
@@ -275,6 +325,13 @@ impl Interpreter {
         Self {
             repl,
             env: Env::new(),
+        }
+    }
+
+    pub fn with_env(&self, env: Rc<Env>) -> Self {
+        Self {
+            repl: self.repl,
+            env,
         }
     }
 }
