@@ -1,3 +1,5 @@
+use crate::object::Object;
+
 #[derive(Debug)]
 pub(crate) enum RloxError {
     // Returned if scanner encounters an error
@@ -5,6 +7,7 @@ pub(crate) enum RloxError {
     Parse(usize, String, String),
     Runtime(usize, String, String),
     Break(usize),
+    Return(usize, Object),
 }
 
 pub(crate) type Result<T> = std::result::Result<T, RloxError>;
@@ -23,6 +26,9 @@ impl std::fmt::Display for RloxError {
             }
             RloxError::Break(ref line) => {
                 write!(f, "Error [line {}]: Unexpected break statement", line)
+            }
+            RloxError::Return(ref line, _) => {
+                write!(f, "Error [line {}]: Unexpected Return statement", line)
             }
         }
     }

@@ -270,6 +270,15 @@ impl StmtVisitor<Result<()>> for Interpreter {
         let f = Callable::new(params, body);
         self.env.define(name, Object::Func(f))
     }
+
+    fn visit_return(&mut self, _stmt: &Stmt, keyword: &Token, val: Option<&Expr>) -> Result<()> {
+        let ret = match val {
+            Some(expr) => expr.accept(self)?,
+            None => ObjLit(Literal::Nil),
+        };
+
+        Err(RloxError::Return(keyword.line, ret))
+    }
 }
 
 impl Interpreter {
