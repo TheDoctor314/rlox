@@ -43,3 +43,12 @@ impl Object {
         }
     }
 }
+
+impl std::fmt::Display for Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Object::Literal(ref lit) => write!(f, "{}", lit),
+            Object::Func(_) => write!(f, "<function>"),
+        }
+    }
+}

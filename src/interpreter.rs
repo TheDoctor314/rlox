@@ -205,7 +205,7 @@ impl StmtVisitor<Result<()>> for Interpreter {
 
     fn visit_print(&mut self, _stmt: &Stmt, expr: &Expr) -> Result<()> {
         let val = expr.accept(self)?;
-        println!("{:?}", val);
+        println!("{}", val);
 
         Ok(())
     }
