@@ -1,7 +1,9 @@
 use crate::expr::Expr;
 use crate::tokens::Token;
 
-#[derive(Debug)]
+pub const FUNCTION_MAX_ARGS: usize = 255;
+
+#[derive(Debug, Clone)]
 pub(crate) enum Stmt {
     Expression(Expr),
     Print(Expr),
@@ -10,6 +12,7 @@ pub(crate) enum Stmt {
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     While(Expr, Box<Stmt>),
     Break(Token),
+    Function(Token, Vec<Token>, Box<Stmt>),
 }
 
 // Add more functions as variants are added to Stmt
@@ -45,6 +48,10 @@ pub(crate) trait Visitor<T> {
     fn visit_break(&mut self, _stmt: &Stmt, _token: &Token) -> T {
         self.visit_stmt(_stmt)
     }
+
+    fn visit_func(&mut self, _stmt: &Stmt, _name: &Token, _params: &[Token], _body: &Stmt) -> T {
+        self.visit_stmt(_stmt)
+    }
 }
 
 impl Stmt {
@@ -66,6 +73,7 @@ impl Stmt {
             ),
             While(ref cond, ref body) => v.visit_while(self, cond, body),
             Break(ref token) => v.visit_break(self, token),
+            Function(ref name, ref params, ref body) => v.visit_func(self, name, params, body),
         }
     }
 }
