@@ -1,8 +1,30 @@
 use crate::tokens;
+use crate::functions::Callable;
 
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, Clone)]
 pub(crate) enum Object {
     Literal(tokens::Literal),
+    Func(Callable),
+}
+
+impl std::cmp::PartialEq for Object {
+    fn eq(&self, other: &Self) -> bool {
+        use Object::Literal as ObjLit;
+        match (self, other) {
+            (&ObjLit(ref lhs), &ObjLit(ref rhs)) => lhs.eq(rhs),
+            _ => false,
+        }
+    }
+}
+
+impl std::cmp::PartialOrd for Object {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        use Object::Literal as ObjLit;
+        match (self, other) {
+            (&ObjLit(ref lhs), &ObjLit(ref rhs)) => lhs.partial_cmp(rhs),
+            _ => None,
+        }
+    }
 }
 
 impl Object {
@@ -17,6 +39,7 @@ impl Object {
                 Number(n) => n != 0.0,
                 String(ref s) => !s.is_empty(),
             },
+            Object::Func(_) => true,
         }
     }
 }
