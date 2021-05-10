@@ -1,6 +1,6 @@
 use crate::tokens::Token;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Expr {
     Identifier(Token),
     Literal(Token),
@@ -9,6 +9,7 @@ pub(crate) enum Expr {
     Unary(Token, Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
     Assignment(Token, Box<Expr>),
+    Call(Box<Expr>, Token, Vec<Expr>),
 }
 
 // TODO: Add more functions as variants are added to Expr
@@ -44,6 +45,10 @@ pub(crate) trait Visitor<T> {
     fn visit_assignment(&mut self, _expr: &Expr, _id: &Token, _val: &Expr) -> T {
         self.visit_expr(_expr)
     }
+
+    fn visit_call(&mut self, _expr: &Expr, _callee: &Expr, _paren: &Token, _args: &[Expr]) -> T {
+        self.visit_expr(_expr)
+    }
 }
 
 impl Expr {
@@ -58,6 +63,7 @@ impl Expr {
             Unary(ref op, ref rhs) => v.visit_unary(self, op, rhs),
             Binary(ref lhs, ref op, ref rhs) => v.visit_binary(self, lhs, op, rhs),
             Assignment(ref id, ref val) => v.visit_assignment(self, id, val),
+            Call(ref callee, ref paren, ref args) => v.visit_call(self, callee.as_ref(), paren, args),
         }
     }
 }
@@ -72,6 +78,7 @@ impl std::fmt::Display for Expr {
             Expr::Unary(ref op, ref rhs) => write!(f, "({} {})", op, rhs),
             Expr::Binary(ref lhs, ref op, ref rhs) => write!(f, "({} {} {})", op, lhs, rhs),
             Expr::Assignment(ref id, ref val) => write!(f, "(= {} {})", id, val),
+            Expr::Call(ref callee, _, ref args) => write!(f, "{}({:?})", callee, args),
         }
     }
 }
