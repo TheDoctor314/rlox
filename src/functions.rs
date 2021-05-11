@@ -9,6 +9,12 @@ use crate::{
     tokens::Token,
 };
 
+#[derive(Debug, Copy, Clone)]
+pub(crate) enum FunctionType {
+    None,
+    Function,
+}
+
 #[derive(Debug, Clone)]
 pub(crate) enum Callable {
     Runtime(LoxFunction),

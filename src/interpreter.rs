@@ -292,7 +292,7 @@ impl Interpreter {
         }
     }
 
-    fn lookup_var(&mut self, id: &Token, _expr: &Expr) -> Result<Object> {
+    fn lookup_var(&self, id: &Token, _expr: &Expr) -> Result<Object> {
         self.env.get(id)
     }
     fn err_near(&self, msg: &str, op: &Token, near: String) -> Result<Object> {
