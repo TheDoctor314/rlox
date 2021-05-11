@@ -1,6 +1,13 @@
 use std::rc::Rc;
 
-use crate::{env::Env, error::{Result, RloxError}, interpreter::Interpreter, object::Object, stmt::Stmt, tokens::Token};
+use crate::{
+    env::Env,
+    error::{Result, RloxError},
+    interpreter::Interpreter,
+    object::Object,
+    stmt::Stmt,
+    tokens::Token,
+};
 
 #[derive(Debug, Clone)]
 pub(crate) enum Callable {
