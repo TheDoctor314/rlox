@@ -78,8 +78,11 @@ impl ExprVisitor<Result<Object>> for Interpreter {
                 (ObjLit(Literal::Number(left_num)), ObjLit(Literal::Number(right_num))) => {
                     Literal::Number(left_num + right_num)
                 }
-                (ObjLit(Literal::String(ref ls)), ObjLit(Literal::String(ref rs))) => {
-                    Literal::String(format!("{}{}", ls, rs))
+                (ObjLit(Literal::String(ref ls)), ObjLit(ref r)) => {
+                    Literal::String(format!("{}{}", ls, r))
+                }
+                (ObjLit(ref l), ObjLit(Literal::String(ref rs))) => {
+                    Literal::String(format!("{}{}", l, rs))
                 }
 
                 (_l, _r) => {
