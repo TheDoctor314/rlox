@@ -454,3 +454,13 @@ impl<'a> Parser<'a> {
         }
     }
 }
+
+pub(crate) trait StmtIterator<'a> {
+    fn statements(self) -> Parser<'a>;
+}
+
+impl<'a> StmtIterator<'a> for Scanner<'a> {
+    fn statements(self) -> Parser<'a> {
+        Parser::new(self)
+    }
+}
