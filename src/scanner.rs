@@ -266,3 +266,13 @@ impl<'a> Iterator for Scanner<'a> {
         }
     }
 }
+
+pub(crate) trait TokenIterator<'a> {
+    fn tokens(self) -> Scanner<'a>;
+}
+
+impl<'a> TokenIterator<'a> for Chars<'a> {
+    fn tokens(self) -> Scanner<'a> {
+        Scanner::new(self)
+    }
+}
