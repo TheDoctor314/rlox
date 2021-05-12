@@ -1,8 +1,11 @@
+use std::io;
+
 use crate::object::Object;
 
 #[derive(Debug)]
 pub(crate) enum RloxError {
     // Returned if scanner encounters an error
+    Io(io::Error),
     Lexical(usize, String, String),
     Parse(usize, String, String),
     Runtime(usize, String, String),
@@ -10,11 +13,18 @@ pub(crate) enum RloxError {
     Return(usize, Object),
 }
 
+impl From<io::Error> for RloxError {
+    fn from(v: io::Error) -> Self {
+        Self::Io(v)
+    }
+}
+
 pub(crate) type Result<T> = std::result::Result<T, RloxError>;
 
 impl std::fmt::Display for RloxError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            RloxError::Io(ref e) => e.fmt(f),
             RloxError::Lexical(ref line, ref msg, ref what) => {
                 write!(f, "Lexical Error [line {}] {}: {:?}", line, msg, what)
             }
@@ -33,3 +43,5 @@ impl std::fmt::Display for RloxError {
         }
     }
 }
+
+impl std::error::Error for RloxError {}

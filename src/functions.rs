@@ -63,7 +63,7 @@ impl LoxFunction {
 
         let env = Rc::clone(&self.closure);
 
-        for (param, arg) in self.params.iter().zip(args.into_iter()) {
+        for (param, arg) in self.params.iter().zip(args.iter()) {
             env.define(param, arg.clone())?;
         }
 
