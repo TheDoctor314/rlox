@@ -31,8 +31,12 @@ fn run_master(input: &str) {
 }
 
 test_case!(brk, "break.lox");
-test_case!(expr, "expr.lox");
+test_case!(class, "class.lox");
 test_case!(counter, "counter.lox");
+test_case!(expr, "expr.lox");
 test_case!(function, "function.lox");
+test_case!(inheritance, "inheritance.lox");
 test_case!(lambda, "lambda.lox");
 test_case!(loops, "loops.lox");
+test_case!(scopes, "scopes.lox");
+test_case!(stmts, "stmts.lox");
