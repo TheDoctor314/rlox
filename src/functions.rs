@@ -61,7 +61,7 @@ impl LoxFunction {
     pub fn call(&self, interpreter: &Interpreter, args: &[Object]) -> Result<Object> {
         use crate::tokens::Literal::Nil;
 
-        let env = Rc::clone(&self.closure);
+        let env = Env::from(&self.closure);
 
         for (param, arg) in self.params.iter().zip(args.iter()) {
             env.define(param, arg.clone())?;
