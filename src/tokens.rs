@@ -27,7 +27,7 @@ lazy_static! {
     .collect();
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum TokenType {
     // Single Character
     LParen,
@@ -85,7 +85,7 @@ impl TokenType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Token {
     pub(crate) token_type: TokenType,
     pub(crate) lexeme: String,
@@ -150,6 +150,19 @@ pub(crate) enum Literal {
     Boolean(bool),
     Number(f64),
     String(String),
+}
+
+impl Eq for Literal {}
+
+impl std::hash::Hash for Literal {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            Literal::Nil => 0.hash(state),
+            Literal::Boolean(b) => b.hash(state),
+            Literal::Number(n) => n.to_bits().hash(state), // hacky solution
+            Literal::String(ref s) => s.hash(state),
+        }
+    }
 }
 
 impl std::fmt::Display for Literal {
