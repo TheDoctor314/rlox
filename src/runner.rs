@@ -1,7 +1,8 @@
 use std::path::Path;
 
 use crate::{
-    error::Result, interpreter::Interpreter, parser::StmtIterator, scanner::TokenIterator,
+    error::Result, interpreter::Interpreter, parser::StmtIterator, resolver::Resolver,
+    scanner::TokenIterator,
 };
 
 pub struct Runner;
@@ -48,7 +49,10 @@ impl Runner {
         for res in src.chars().tokens().statements() {
             match res {
                 Err(e) => eprintln!("{}", e),
-                Ok(stmt) => i.interpret(&stmt)?,
+                Ok(stmt) => {
+                    let i = Resolver::resolve(i, &stmt)?;
+                    stmt.accept(i)?;
+                }
             }
         }
 

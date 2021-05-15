@@ -1,5 +1,5 @@
 // temporary allow
-#![allow(dead_code)]
+//#![allow(dead_code)]
 
 mod env;
 mod error;
@@ -8,6 +8,7 @@ mod functions;
 mod interpreter;
 mod object;
 mod parser;
+mod resolver;
 mod runner;
 mod scanner;
 mod stmt;
