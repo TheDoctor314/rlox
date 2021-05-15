@@ -13,6 +13,7 @@ pub(crate) struct Resolver<'a> {
     interpreter: &'a mut Interpreter,
     scopes: Vec<HashMap<String, bool>>,
     current_func: FunctionType,
+    in_loop: bool,
 }
 
 impl<'a> Resolver<'a> {
@@ -21,6 +22,7 @@ impl<'a> Resolver<'a> {
             interpreter: i,
             scopes: Vec::new(),
             current_func: FunctionType::None,
+            in_loop: false,
         }
     }
 
@@ -153,11 +155,20 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
     }
 
     fn visit_while(&mut self, _stmt: &Stmt, cond: &Expr, body: &Stmt) -> Result<()> {
+        let prev = self.in_loop;
+        self.in_loop = true;
+
         cond.accept(self)?;
-        body.accept(self)
+        body.accept(self)?;
+
+        self.in_loop = prev;
+        Ok(())
     }
 
-    fn visit_break(&mut self, _stmt: &Stmt, _token: &Token) -> Result<()> {
+    fn visit_break(&mut self, _stmt: &Stmt, token: &Token) -> Result<()> {
+        if !self.in_loop {
+            return Err(RloxError::Break(token.line));
+        }
         Ok(())
     }
 
