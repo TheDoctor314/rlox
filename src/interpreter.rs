@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::functions::Callable;
 use crate::object::Object;
@@ -17,6 +17,7 @@ use Object::Literal as ObjLit;
 pub(crate) struct Interpreter {
     pub(crate) repl: bool,
     pub(crate) env: Rc<Env>,
+    locals: Rc<HashMap<Expr, usize>>,
 }
 
 impl ExprVisitor<Result<Object>> for Interpreter {
@@ -168,7 +169,7 @@ impl ExprVisitor<Result<Object>> for Interpreter {
 
     fn visit_assignment(&mut self, _expr: &Expr, id: &Token, val: &Expr) -> Result<Object> {
         let v = val.accept(self)?;
-        self.env.assign(id, v)
+        self.env.assign_at(id, v, self.locals.get(val).copied())
     }
 
     fn visit_identifier(&mut self, expr: &Expr, id: &Token) -> Result<Object> {
@@ -289,11 +290,12 @@ impl Interpreter {
         Self {
             repl: false,
             env: Env::from(&self.env),
+            locals: Rc::clone(&self.locals),
         }
     }
 
-    fn lookup_var(&self, id: &Token, _expr: &Expr) -> Result<Object> {
-        self.env.get(id)
+    fn lookup_var(&self, id: &Token, expr: &Expr) -> Result<Object> {
+        self.env.get_at(id, self.locals.get(expr).copied())
     }
     fn err_near(&self, msg: &str, op: &Token, near: String) -> Result<Object> {
         Err(RloxError::Runtime(op.line, msg.to_string(), near))
@@ -329,14 +331,11 @@ impl Interpreter {
         callee.call(self, &params)
     }
 
-    pub(crate) fn interpret(&mut self, stmt: &Stmt) -> Result<()> {
-        stmt.accept(self)
-    }
-
     pub fn new(repl: bool) -> Self {
         Self {
             repl,
             env: Env::new(),
+            locals: Rc::new(HashMap::new()),
         }
     }
 
@@ -344,6 +343,13 @@ impl Interpreter {
         Self {
             repl: self.repl,
             env,
+            locals: Rc::clone(&self.locals),
         }
+    }
+
+    pub(crate) fn resolve(&mut self, expr: &Expr, idx: usize) {
+        Rc::get_mut(&mut self.locals)
+            .expect("Should be the only mutable ref")
+            .insert(expr.clone(), idx);
     }
 }
