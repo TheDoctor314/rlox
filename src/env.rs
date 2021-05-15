@@ -33,6 +33,24 @@ impl Env {
         Ok(())
     }
 
+    pub fn assign_at(&self, id: &Token, val: Object, dist: Option<usize>) -> Result<Object> {
+        if dist.map_or(0, |d| d) == 0 {
+            return self.assign(id, val);
+        }
+
+        let dist = dist.unwrap();
+
+        if let Some(ancestor) = self.ancestor(dist) {
+            return ancestor.assign(id, val);
+        }
+
+        Err(RloxError::Runtime(
+            id.line,
+            format!("Ancestor is undefined at depth {}", dist),
+            id.lexeme.to_owned(),
+        ))
+    }
+
     // recursive; if not in current scope then looks in parent scope
     pub fn assign(&self, id: &Token, val: Object) -> Result<Object> {
         let name = &id.lexeme;
@@ -54,6 +72,29 @@ impl Env {
         Ok(val)
     }
 
+    // looks in a specific scope for the variable or throws an error otherwise
+    pub fn get_at(&self, id: &Token, dist: Option<usize>) -> Result<Object> {
+        if dist.is_none() {
+            // return from global scope
+            return self.get_global(id);
+        }
+
+        let dist = dist.unwrap();
+        if dist == 0 {
+            return self.get(id);
+        }
+
+        if let Some(ancestor) = self.ancestor(dist) {
+            return ancestor.get(id);
+        }
+
+        Err(RloxError::Runtime(
+            id.line,
+            format!("Ancestor is undefined at depth {}", dist),
+            id.lexeme.to_owned(),
+        ))
+    }
+
     // recursive; if not in current scope then looks in parent scope
     pub fn get(&self, id: &Token) -> Result<Object> {
         let name = &id.lexeme;
@@ -72,5 +113,24 @@ impl Env {
         }
 
         Ok(values.get(name).cloned().unwrap())
+    }
+}
+
+impl Env {
+    fn ancestor(&self, dist: usize) -> Option<Rc<Env>> {
+        let mut env = self.parent.clone();
+
+        for _ in 1..dist {
+            env = env?.parent.clone();
+        }
+
+        env
+    }
+
+    fn get_global(&self, id: &Token) -> Result<Object> {
+        match self.parent {
+            None => self.get(id),
+            Some(ref p) => p.get_global(id),
+        }
     }
 }
