@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::{
     error::{Result, RloxError},
     expr::{Expr, Visitor as ExprVisitor},
+    functions::FunctionType,
     interpreter::Interpreter,
     stmt::{Stmt, Visitor as StmtVisitor},
     tokens::Token,
@@ -11,6 +12,7 @@ use crate::{
 pub(crate) struct Resolver<'a> {
     interpreter: &'a mut Interpreter,
     scopes: Vec<HashMap<String, bool>>,
+    current_func: FunctionType,
 }
 
 impl<'a> Resolver<'a> {
@@ -18,6 +20,7 @@ impl<'a> Resolver<'a> {
         Self {
             interpreter: i,
             scopes: Vec::new(),
+            current_func: FunctionType::None,
         }
     }
 
@@ -168,10 +171,18 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
         self.declare(name)?;
         self.define(name)?;
 
-        self.resolve_function(params, body)
+        self.resolve_function(params, body, FunctionType::Function)
     }
 
-    fn visit_return(&mut self, _stmt: &Stmt, _keyword: &Token, val: Option<&Expr>) -> Result<()> {
+    fn visit_return(&mut self, _stmt: &Stmt, keyword: &Token, val: Option<&Expr>) -> Result<()> {
+        if let FunctionType::None = self.current_func {
+            return Err(RloxError::Parse(
+                keyword.line,
+                "cannot return from top-level code".to_string(),
+                keyword.lexeme.to_owned(),
+            ));
+        }
+
         if let Some(val) = val {
             val.accept(self)?;
         }
@@ -221,7 +232,14 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    fn resolve_function(&mut self, params: &[Token], body: &Stmt) -> Result<()> {
+    fn resolve_function(
+        &mut self,
+        params: &[Token],
+        body: &Stmt,
+        func_type: FunctionType,
+    ) -> Result<()> {
+        let prev_type = self.current_func;
+        self.current_func = func_type;
         self.begin_scope();
 
         for param in params {
@@ -230,6 +248,8 @@ impl<'a> Resolver<'a> {
 
         body.accept(self)?;
         self.end_scope();
+        self.current_func = prev_type;
+
         Ok(())
     }
 }
