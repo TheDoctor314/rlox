@@ -191,7 +191,13 @@ impl<'a> Resolver<'a> {
 
     fn declare(&mut self, id: &Token) -> Result<()> {
         if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(id.lexeme.to_owned(), false);
+            if scope.insert(id.lexeme.to_owned(), false).is_some() {
+                return Err(RloxError::Parse(
+                    id.line,
+                    "variable already defined with this name in this scope".to_string(),
+                    id.lexeme.to_owned(),
+                ));
+            }
         }
 
         Ok(())
