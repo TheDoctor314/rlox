@@ -315,8 +315,22 @@ impl StmtVisitor<Result<()>> for Interpreter {
         Err(RloxError::Return(keyword.line, ret))
     }
 
-    fn visit_class(&mut self, _stmt: &Stmt, name: &Token, _methods: &[Stmt]) -> Result<()> {
-        let cls = Rc::new(LoxClass::new(name.lexeme.clone()));
+    fn visit_class(&mut self, _stmt: &Stmt, name: &Token, methods: &[Stmt]) -> Result<()> {
+        let env = Env::from(&self.env);
+
+        let mut method_map = HashMap::with_capacity(methods.len());
+        for method in methods {
+            match method {
+                Stmt::Function(ref id, ref params, ref body) => {
+                    let f = Callable::new(&env, params, body);
+
+                    method_map.insert(id.lexeme.clone(), f);
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        let cls = Rc::new(LoxClass::new(name.lexeme.clone(), method_map));
         self.env.define(name, Object::Class(cls))
     }
 }
