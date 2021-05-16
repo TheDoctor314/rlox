@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use crate::{
+    class::{LoxClass, LoxInstance},
     env::Env,
     error::{Result, RloxError},
     interpreter::Interpreter,
@@ -18,6 +19,7 @@ pub(crate) enum FunctionType {
 #[derive(Debug, Clone)]
 pub(crate) enum Callable {
     Runtime(LoxFunction),
+    Init(ClassInit),
 }
 
 impl Callable {
@@ -25,15 +27,21 @@ impl Callable {
         Callable::Runtime(LoxFunction::new(env, params, body))
     }
 
+    pub fn init(class: &Rc<LoxClass>) -> Self {
+        Callable::Init(ClassInit(Rc::clone(class)))
+    }
+
     pub fn arity(&self) -> usize {
         match self {
             Callable::Runtime(ref f) => f.arity(),
+            Callable::Init(ref cls) => cls.arity(),
         }
     }
 
     pub fn call(&self, interpreter: &Interpreter, args: &[Object]) -> Result<Object> {
         match self {
             Callable::Runtime(ref f) => f.call(interpreter, args),
+            Callable::Init(ref cls) => cls.call(interpreter, args),
         }
     }
 }
@@ -72,5 +80,19 @@ impl LoxFunction {
             Err(RloxError::Return(_, ret)) => Ok(ret),
             Err(e) => Err(e),
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct ClassInit(Rc<LoxClass>);
+
+impl ClassInit {
+    pub fn arity(&self) -> usize {
+        0 // for now
+    }
+
+    pub fn call(&self, interpreter: &Interpreter, args: &[Object]) -> Result<Object> {
+        let inst = LoxInstance::new(&self.0);
+        Ok(Object::Instance(inst))
     }
 }
