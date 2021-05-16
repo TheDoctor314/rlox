@@ -14,6 +14,7 @@ pub(crate) enum Stmt {
     Break(Token),
     Function(Token, Vec<Token>, Box<Stmt>),
     Return(Token, Option<Box<Expr>>),
+    Class(Token, Vec<Stmt>),
 }
 
 // Add more functions as variants are added to Stmt
@@ -57,6 +58,10 @@ pub(crate) trait Visitor<T> {
     fn visit_return(&mut self, _stmt: &Stmt, _keyword: &Token, _val: Option<&Expr>) -> T {
         self.visit_stmt(_stmt)
     }
+
+    fn visit_class(&mut self, _stmt: &Stmt, _name: &Token, _methods: &[Stmt]) -> T {
+        self.visit_stmt(_stmt)
+    }
 }
 
 impl Stmt {
@@ -82,6 +87,7 @@ impl Stmt {
             Return(ref token, ref val) => {
                 v.visit_return(self, token, val.as_ref().map(|val| val.as_ref()))
             }
+            Class(ref name, ref methods) => v.visit_class(self, name, methods),
         }
     }
 }
