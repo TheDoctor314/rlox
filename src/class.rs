@@ -2,6 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     error::{Result, RloxError},
+    functions::Callable,
     object::Object,
     tokens::Token,
 };
@@ -9,11 +10,16 @@ use crate::{
 #[derive(Debug, Clone)]
 pub(crate) struct LoxClass {
     name: String,
+    methods: HashMap<String, Callable>,
 }
 
 impl LoxClass {
-    pub(crate) fn new(name: String) -> Self {
-        Self { name }
+    pub(crate) fn new(name: String, methods: HashMap<String, Callable>) -> Self {
+        Self { name, methods }
+    }
+
+    pub(crate) fn find_method(&self, name: &str) -> Option<&Callable> {
+        self.methods.get(name)
     }
 }
 impl std::fmt::Display for LoxClass {
@@ -39,6 +45,10 @@ impl LoxInstance {
     pub(crate) fn get(&self, field: &Token) -> Result<Object> {
         if let Some(obj) = self.fields.borrow().get(&field.lexeme) {
             return Ok(obj.clone());
+        }
+
+        if let Some(method) = self.class.find_method(field.lexeme.as_ref()) {
+            return Ok(Object::Func(method.clone()));
         }
 
         Err(RloxError::Runtime(
