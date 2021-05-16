@@ -1,10 +1,14 @@
-use crate::functions::Callable;
-use crate::tokens;
+use std::rc::Rc;
+
+use crate::{class::LoxClass, functions::Callable};
+use crate::{class::LoxInstance, tokens};
 
 #[derive(Debug, Clone)]
 pub(crate) enum Object {
     Literal(tokens::Literal),
     Func(Callable),
+    Class(Rc<LoxClass>),
+    Instance(LoxInstance),
 }
 
 impl std::cmp::PartialEq for Object {
@@ -39,7 +43,7 @@ impl Object {
                 Number(n) => n != 0.0,
                 String(ref s) => !s.is_empty(),
             },
-            Object::Func(_) => true,
+            _ => true,
         }
     }
 }
@@ -49,6 +53,8 @@ impl std::fmt::Display for Object {
         match self {
             Object::Literal(ref lit) => write!(f, "{}", lit),
             Object::Func(_) => write!(f, "<function>"),
+            Object::Class(ref cls) => write!(f, "{}", cls),
+            Object::Instance(ref i) => write!(f, "{}", i),
         }
     }
 }

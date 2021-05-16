@@ -1,6 +1,7 @@
 // temporary allow
 //#![allow(dead_code)]
 
+mod class;
 mod env;
 mod error;
 mod expr;
