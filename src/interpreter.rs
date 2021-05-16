@@ -1,9 +1,9 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::functions::Callable;
 use crate::object::Object;
 use crate::stmt::{Stmt, Visitor as StmtVisitor};
 use crate::tokens::Token;
+use crate::{class::LoxClass, functions::Callable};
 use crate::{
     env::Env,
     error::{Result, RloxError},
@@ -185,6 +185,7 @@ impl ExprVisitor<Result<Object>> for Interpreter {
     ) -> Result<Object> {
         match callee.accept(self)? {
             Object::Func(ref f) => self.call_dispatch(f, paren, args),
+            Object::Class(ref cls) => self.call_dispatch(&Callable::init(cls), paren, args),
             x => self.err_near(
                 "Can only call functions and classes",
                 paren,
@@ -282,6 +283,11 @@ impl StmtVisitor<Result<()>> for Interpreter {
         };
 
         Err(RloxError::Return(keyword.line, ret))
+    }
+
+    fn visit_class(&mut self, _stmt: &Stmt, name: &Token, _methods: &[Stmt]) -> Result<()> {
+        let cls = Rc::new(LoxClass::new(name.lexeme.clone()));
+        self.env.define(name, Object::Class(cls))
     }
 }
 
