@@ -193,6 +193,36 @@ impl ExprVisitor<Result<Object>> for Interpreter {
             ),
         }
     }
+
+    fn visit_get(&mut self, _expr: &Expr, callee: &Expr, prop: &Token) -> Result<Object> {
+        if let Object::Instance(ref inst) = callee.accept(self)? {
+            return inst.get(prop);
+        }
+
+        Err(RloxError::Runtime(
+            prop.line,
+            "Only instances have properties".to_string(),
+            prop.lexeme.to_owned(),
+        ))
+    }
+
+    fn visit_set(
+        &mut self,
+        _expr: &Expr,
+        settee: &Expr,
+        prop: &Token,
+        val: &Expr,
+    ) -> Result<Object> {
+        if let Object::Instance(ref inst) = settee.accept(self)? {
+            inst.set(prop, val.accept(self)?)
+        } else {
+            Err(RloxError::Runtime(
+                prop.line,
+                "Only instances have fields".to_string(),
+                prop.lexeme.to_owned(),
+            ))
+        }
+    }
 }
 
 impl StmtVisitor<Result<()>> for Interpreter {
