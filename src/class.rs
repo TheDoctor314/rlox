@@ -1,4 +1,10 @@
-use std::rc::Rc;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
+use crate::{
+    error::{Result, RloxError},
+    object::Object,
+    tokens::Token,
+};
 
 #[derive(Debug, Clone)]
 pub(crate) struct LoxClass {
@@ -19,13 +25,35 @@ impl std::fmt::Display for LoxClass {
 #[derive(Debug, Clone)]
 pub(crate) struct LoxInstance {
     class: Rc<LoxClass>,
+    fields: Rc<RefCell<HashMap<String, Object>>>,
 }
 
 impl LoxInstance {
     pub(crate) fn new(class: &Rc<LoxClass>) -> Self {
         Self {
             class: Rc::clone(class),
+            fields: Rc::new(RefCell::new(HashMap::new())),
         }
+    }
+
+    pub(crate) fn get(&self, field: &Token) -> Result<Object> {
+        if let Some(obj) = self.fields.borrow().get(&field.lexeme) {
+            return Ok(obj.clone());
+        }
+
+        Err(RloxError::Runtime(
+            field.line,
+            format!("Undefined property {}", field.lexeme),
+            field.lexeme.to_owned(),
+        ))
+    }
+
+    // Lox allows freely creating new fields
+    pub(crate) fn set(&self, field: &Token, val: Object) -> Result<Object> {
+        self.fields
+            .borrow_mut()
+            .insert(field.lexeme.clone(), val.clone());
+        Ok(val)
     }
 }
 
