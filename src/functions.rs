@@ -14,6 +14,7 @@ use crate::{
 pub(crate) enum FunctionType {
     None,
     Function,
+    Method,
 }
 
 #[derive(Debug, Clone)]

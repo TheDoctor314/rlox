@@ -210,9 +210,19 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
         Ok(())
     }
 
-    fn visit_class(&mut self, _stmt: &Stmt, name: &Token, _methods: &[Stmt]) -> Result<()> {
+    fn visit_class(&mut self, _stmt: &Stmt, name: &Token, methods: &[Stmt]) -> Result<()> {
         self.declare(name)?;
         self.define(name)?;
+
+        for method in methods {
+            match method {
+                Stmt::Function(ref _id, ref params, ref body) => {
+                    let func_type = FunctionType::Method;
+                    self.resolve_function(params, body.as_ref(), func_type)?;
+                }
+                _ => unreachable!(),
+            }
+        }
 
         Ok(())
     }
