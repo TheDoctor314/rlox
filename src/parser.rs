@@ -41,7 +41,9 @@ impl<'a> Iterator for Parser<'a> {
 // Statement related methods
 impl<'a> Parser<'a> {
     fn statement(&mut self) -> Result<Stmt> {
-        let token = self.check_advance(&[Print, Var, LBrace, If, While, For, Break, Fun, Return]);
+        let token = self.check_advance(&[
+            Print, Var, LBrace, If, While, For, Break, Fun, Return, Class,
+        ]);
         if token.is_none() {
             return self.expr_statement();
         }
@@ -58,6 +60,7 @@ impl<'a> Parser<'a> {
             Break => self.break_statement(token),
             Fun => self.function(),
             Return => self.return_statement(token),
+            Class => self.class_decl(),
             _ => unreachable!(),
         }
     }
@@ -222,6 +225,21 @@ impl<'a> Parser<'a> {
 
         self.must_advance(&[SemiColon])?;
         Ok(Stmt::Return(token, expr))
+    }
+
+    fn class_decl(&mut self) -> Result<Stmt> {
+        let name = self.must_advance(&[Ident])?;
+        self.must_advance(&[LBrace])?;
+
+        let mut methods = Vec::new();
+        while !self.check(&[RBrace]) {
+            methods.push(self.function()?);
+        }
+
+        self.must_advance(&[RBrace])?;
+        methods.shrink_to_fit(); // why waste the extra space?
+
+        Ok(Stmt::Class(name, methods))
     }
 }
 
