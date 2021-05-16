@@ -102,6 +102,15 @@ impl<'a> ExprVisitor<Result<()>> for Resolver<'a> {
 
         Ok(())
     }
+
+    fn visit_get(&mut self, _expr: &Expr, callee: &Expr, _prop: &Token) -> Result<()> {
+        callee.accept(self)
+    }
+
+    fn visit_set(&mut self, _expr: &Expr, settee: &Expr, _prop: &Token, val: &Expr) -> Result<()> {
+        val.accept(self)?;
+        settee.accept(self)
+    }
 }
 
 impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
