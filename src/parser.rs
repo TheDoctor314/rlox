@@ -259,6 +259,9 @@ impl<'a> Parser<'a> {
                 Expr::Identifier(token) => {
                     return Ok(Expr::Assignment(token, Box::new(self.assignment()?)))
                 }
+                Expr::Get(settee, prop) => {
+                    return Ok(Expr::Set(settee, prop, Box::new(self.assignment()?)));
+                }
                 _ => return Err(Parser::unexpected(&equals)),
             }
         }
@@ -338,9 +341,13 @@ impl<'a> Parser<'a> {
         let mut expr = self.primary()?;
 
         loop {
-            expr = match self.check_advance(&[LParen]) {
+            expr = match self.check_advance(&[LParen, Dot]) {
                 Some(Err(e)) => return Err(e),
-                Some(Ok(_)) => self.finish_call(expr)?,
+                Some(Ok(ref token)) => match token.token_type {
+                    LParen => self.finish_call(expr)?,
+                    Dot => Expr::Get(Box::new(expr), self.must_advance(&[Ident])?),
+                    _ => unreachable!(),
+                },
                 None => break,
             };
         }
