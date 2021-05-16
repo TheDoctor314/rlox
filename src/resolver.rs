@@ -200,6 +200,13 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
 
         Ok(())
     }
+
+    fn visit_class(&mut self, _stmt: &Stmt, name: &Token, _methods: &[Stmt]) -> Result<()> {
+        self.declare(name)?;
+        self.define(name)?;
+
+        Ok(())
+    }
 }
 
 impl<'a> Resolver<'a> {
