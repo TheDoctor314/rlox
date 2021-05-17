@@ -48,7 +48,7 @@ impl LoxInstance {
         }
 
         if let Some(method) = self.class.find_method(field.lexeme.as_ref()) {
-            return Ok(Object::Func(method.clone()));
+            return Ok(Object::Func(method.bind(self)));
         }
 
         Err(RloxError::Runtime(
@@ -71,4 +71,14 @@ impl std::fmt::Display for LoxInstance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} instance", self.class)
     }
+}
+
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub(crate) static ref THIS: Token = Token {
+        token_type: crate::tokens::TokenType::This,
+        lexeme: "this".to_string(),
+        ..Token::default()
+    };
 }

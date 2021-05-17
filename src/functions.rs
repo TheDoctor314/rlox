@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use crate::{
-    class::{LoxClass, LoxInstance},
+    class::{LoxClass, LoxInstance, THIS},
     env::Env,
     error::{Result, RloxError},
     interpreter::Interpreter,
@@ -45,6 +45,13 @@ impl Callable {
             Callable::Init(ref cls) => cls.call(interpreter, args),
         }
     }
+
+    pub fn bind(&self, inst: &LoxInstance) -> Self {
+        match self {
+            Callable::Runtime(ref f) => Callable::Runtime(f.bind(inst)),
+            _ => unreachable!(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -81,6 +88,14 @@ impl LoxFunction {
             Err(RloxError::Return(_, ret)) => Ok(ret),
             Err(e) => Err(e),
         }
+    }
+
+    pub fn bind(&self, inst: &LoxInstance) -> Self {
+        let env = Env::from(&self.closure);
+        env.define(&THIS, Object::Instance(inst.clone()))
+            .expect("Failed to define 'this'");
+
+        Self::new(&env, &self.params, &self.body)
     }
 }
 
