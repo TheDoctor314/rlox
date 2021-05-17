@@ -12,6 +12,7 @@ pub(crate) enum Expr {
     Call(Box<Expr>, Token, Vec<Expr>),
     Get(Box<Expr>, Token),
     Set(Box<Expr>, Token, Box<Expr>),
+    This(Token),
 }
 
 // TODO: Add more functions as variants are added to Expr
@@ -59,6 +60,10 @@ pub(crate) trait Visitor<T> {
     fn visit_set(&mut self, _expr: &Expr, _settee: &Expr, _prop: &Token, _val: &Expr) -> T {
         self.visit_expr(_expr)
     }
+
+    fn visit_this(&mut self, _expr: &Expr, _token: &Token) -> T {
+        self.visit_expr(_expr)
+    }
 }
 
 impl Expr {
@@ -80,6 +85,7 @@ impl Expr {
             Set(ref settee, ref prop, ref val) => {
                 v.visit_set(self, settee.as_ref(), prop, val.as_ref())
             }
+            This(ref token) => v.visit_this(self, token),
         }
     }
 }
@@ -99,6 +105,7 @@ impl std::fmt::Display for Expr {
             Expr::Set(ref settee, ref prop, ref val) => {
                 write!(f, "{}.{} = {}", settee.as_ref(), prop, val.as_ref())
             }
+            Expr::This(_) => write!(f, "this"),
         }
     }
 }
