@@ -104,11 +104,21 @@ pub(crate) struct ClassInit(Rc<LoxClass>);
 
 impl ClassInit {
     pub fn arity(&self) -> usize {
-        0 // for now
+        let init = self.0.find_method("init");
+        if let Some(init) = init {
+            return init.arity();
+        }
+
+        0
     }
 
     pub fn call(&self, interpreter: &Interpreter, args: &[Object]) -> Result<Object> {
         let inst = LoxInstance::new(&self.0);
+
+        if let Some(init) = self.0.find_method("init") {
+            init.bind(&inst).call(interpreter, args)?;
+        }
+
         Ok(Object::Instance(inst))
     }
 }
