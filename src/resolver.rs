@@ -211,13 +211,24 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
     }
 
     fn visit_return(&mut self, _stmt: &Stmt, keyword: &Token, val: Option<&Expr>) -> Result<()> {
-        if let FunctionType::None = self.current_func {
-            return Err(RloxError::Parse(
-                keyword.line,
-                "cannot return from top-level code".to_string(),
-                keyword.lexeme.to_owned(),
-            ));
-        }
+        use FunctionType::*;
+        match self.current_func {
+            None => {
+                return Err(RloxError::Parse(
+                    keyword.line,
+                    "cannot return from top-level code".to_string(),
+                    keyword.lexeme.to_owned(),
+                ))
+            }
+            Initializer => {
+                return Err(RloxError::Parse(
+                    keyword.line,
+                    "cannot return a value from an initializer".to_string(),
+                    keyword.lexeme.to_owned(),
+                ));
+            }
+            _ => (),
+        };
 
         if let Some(val) = val {
             val.accept(self)?;
@@ -241,8 +252,13 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
 
         for method in methods {
             match method {
-                Stmt::Function(ref _id, ref params, ref body) => {
-                    let func_type = FunctionType::Method;
+                Stmt::Function(ref id, ref params, ref body) => {
+                    let func_type = if id.lexeme.eq("init") {
+                        FunctionType::Initializer
+                    } else {
+                        FunctionType::Method
+                    };
+
                     self.resolve_function(params, body.as_ref(), func_type)?;
                 }
                 _ => unreachable!(),

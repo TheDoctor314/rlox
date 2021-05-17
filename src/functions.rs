@@ -14,6 +14,7 @@ use crate::{
 pub(crate) enum FunctionType {
     None,
     Function,
+    Initializer,
     Method,
 }
 
