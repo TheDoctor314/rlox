@@ -306,7 +306,7 @@ impl StmtVisitor<Result<()>> for Interpreter {
         params: &[Token],
         body: &Stmt,
     ) -> Result<()> {
-        let f = Callable::new(&self.env, params, body);
+        let f = Callable::new(&self.env, params, body, false);
         self.env.define(name, Object::Func(f))
     }
 
@@ -326,7 +326,7 @@ impl StmtVisitor<Result<()>> for Interpreter {
         for method in methods {
             match method {
                 Stmt::Function(ref id, ref params, ref body) => {
-                    let f = Callable::new(&env, params, body);
+                    let f = Callable::new(&env, params, body, id.lexeme.eq("init"));
 
                     method_map.insert(id.lexeme.clone(), f);
                 }
