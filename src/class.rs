@@ -7,6 +7,11 @@ use crate::{
     tokens::Token,
 };
 
+#[derive(Debug, Copy, Clone)]
+pub(crate) enum ClassType {
+    None,
+    Class,
+}
 #[derive(Debug, Clone)]
 pub(crate) struct LoxClass {
     name: String,

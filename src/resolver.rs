@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
+    class::ClassType,
     error::{Result, RloxError},
     expr::{Expr, Visitor as ExprVisitor},
     functions::FunctionType,
@@ -13,6 +14,7 @@ pub(crate) struct Resolver<'a> {
     interpreter: &'a mut Interpreter,
     scopes: Vec<HashMap<String, bool>>,
     current_func: FunctionType,
+    current_class: ClassType,
     in_loop: bool,
 }
 
@@ -22,6 +24,7 @@ impl<'a> Resolver<'a> {
             interpreter: i,
             scopes: Vec::new(),
             current_func: FunctionType::None,
+            current_class: ClassType::None,
             in_loop: false,
         }
     }
@@ -110,6 +113,19 @@ impl<'a> ExprVisitor<Result<()>> for Resolver<'a> {
     fn visit_set(&mut self, _expr: &Expr, settee: &Expr, _prop: &Token, val: &Expr) -> Result<()> {
         val.accept(self)?;
         settee.accept(self)
+    }
+
+    fn visit_this(&mut self, expr: &Expr, token: &Token) -> Result<()> {
+        if let ClassType::None = self.current_class {
+            return Err(RloxError::Parse(
+                token.line,
+                "Cannot use 'this' outside of a class".to_string(),
+                token.lexeme.to_owned(),
+            ));
+        }
+
+        self.resolve_local(token, expr);
+        Ok(())
     }
 }
 
@@ -211,8 +227,17 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
     }
 
     fn visit_class(&mut self, _stmt: &Stmt, name: &Token, methods: &[Stmt]) -> Result<()> {
+        let prev = self.current_class;
+        self.current_class = ClassType::Class;
+
         self.declare(name)?;
         self.define(name)?;
+
+        self.begin_scope();
+        self.scopes
+            .last_mut()
+            .unwrap()
+            .insert("this".to_string(), true); //FIXME: maybe use an abstraction?
 
         for method in methods {
             match method {
@@ -223,6 +248,9 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
                 _ => unreachable!(),
             }
         }
+
+        self.end_scope();
+        self.current_class = prev;
 
         Ok(())
     }
