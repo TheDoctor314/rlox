@@ -24,8 +24,8 @@ pub(crate) enum Callable {
 }
 
 impl Callable {
-    pub fn new(env: &Rc<Env>, params: &[Token], body: &Stmt) -> Self {
-        Callable::Runtime(LoxFunction::new(env, params, body))
+    pub fn new(env: &Rc<Env>, params: &[Token], body: &Stmt, init: bool) -> Self {
+        Callable::Runtime(LoxFunction::new(env, params, body, init))
     }
 
     pub fn init(class: &Rc<LoxClass>) -> Self {
@@ -59,14 +59,16 @@ pub(crate) struct LoxFunction {
     closure: Rc<Env>,
     params: Vec<Token>,
     body: Box<Stmt>,
+    init: bool,
 }
 
 impl LoxFunction {
-    pub fn new(scope: &Rc<Env>, params: &[Token], body: &Stmt) -> Self {
+    pub fn new(scope: &Rc<Env>, params: &[Token], body: &Stmt, init: bool) -> Self {
         Self {
             closure: Rc::clone(scope),
             params: params.to_vec(),
             body: Box::new(body.clone()),
+            init,
         }
     }
 
@@ -84,6 +86,9 @@ impl LoxFunction {
         }
 
         match self.body.accept(&mut interpreter.with_env(env)) {
+            Ok(()) | Err(RloxError::Return(_, _)) if self.init => {
+                self.closure.get_at(&THIS, Some(0))
+            }
             Ok(()) => Ok(Object::Literal(Nil)),
             Err(RloxError::Return(_, ret)) => Ok(ret),
             Err(e) => Err(e),
@@ -95,7 +100,7 @@ impl LoxFunction {
         env.define(&THIS, Object::Instance(inst.clone()))
             .expect("Failed to define 'this'");
 
-        Self::new(&env, &self.params, &self.body)
+        Self::new(&env, &self.params, &self.body, self.init)
     }
 }
 
@@ -104,12 +109,7 @@ pub(crate) struct ClassInit(Rc<LoxClass>);
 
 impl ClassInit {
     pub fn arity(&self) -> usize {
-        let init = self.0.find_method("init");
-        if let Some(init) = init {
-            return init.arity();
-        }
-
-        0
+        self.0.find_method("init").map_or(0, |init| init.arity())
     }
 
     pub fn call(&self, interpreter: &Interpreter, args: &[Object]) -> Result<Object> {
