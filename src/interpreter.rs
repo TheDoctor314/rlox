@@ -223,6 +223,10 @@ impl ExprVisitor<Result<Object>> for Interpreter {
             ))
         }
     }
+
+    fn visit_this(&mut self, expr: &Expr, token: &Token) -> Result<Object> {
+        self.lookup_var(token, expr)
+    }
 }
 
 impl StmtVisitor<Result<()>> for Interpreter {
