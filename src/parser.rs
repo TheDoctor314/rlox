@@ -384,10 +384,11 @@ impl<'a> Parser<'a> {
 
     fn primary(&mut self) -> Result<Expr> {
         if let Some(Ok(token)) =
-            self.check_advance(&[Nil, False, True, Number, StringLiteral, Ident])
+            self.check_advance(&[Nil, False, True, Number, StringLiteral, Ident, This])
         {
             return match token.token_type {
                 Ident => Ok(Expr::Identifier(token)),
+                This => Ok(Expr::This(token)),
                 Nil | False | True | Number | StringLiteral => Ok(Expr::Literal(token)),
                 _ => Err(Parser::unexpected(&token)),
             };
