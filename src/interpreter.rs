@@ -319,8 +319,29 @@ impl StmtVisitor<Result<()>> for Interpreter {
         Err(RloxError::Return(keyword.line, ret))
     }
 
-    fn visit_class(&mut self, _stmt: &Stmt, name: &Token, methods: &[Stmt]) -> Result<()> {
+    fn visit_class(
+        &mut self,
+        _stmt: &Stmt,
+        name: &Token,
+        parent: Option<&Expr>,
+        methods: &[Stmt],
+    ) -> Result<()> {
         let env = Env::from(&self.env);
+
+        let super_class = if let Some(p) = parent {
+            match p.accept(self)? {
+                Object::Class(ref c) => Some(Rc::clone(c)),
+                _ => {
+                    return Err(RloxError::Runtime(
+                        name.line,
+                        "Superclass must be a class".to_string(),
+                        name.lexeme.to_owned(),
+                    ))
+                }
+            }
+        } else {
+            None
+        };
 
         let mut method_map = HashMap::with_capacity(methods.len());
         for method in methods {
@@ -334,7 +355,7 @@ impl StmtVisitor<Result<()>> for Interpreter {
             }
         }
 
-        let cls = Rc::new(LoxClass::new(name.lexeme.clone(), method_map));
+        let cls = Rc::new(LoxClass::new(name.lexeme.clone(), super_class, method_map));
         self.env.define(name, Object::Class(cls))
     }
 }
