@@ -127,6 +127,25 @@ impl<'a> ExprVisitor<Result<()>> for Resolver<'a> {
         self.resolve_local(token, expr);
         Ok(())
     }
+
+    fn visit_super(&mut self, expr: &Expr, keyword: &Token, _method: &Token) -> Result<()> {
+        match self.current_class {
+            ClassType::None => Err(RloxError::Parse(
+                keyword.line,
+                "cannot use 'super' outside of a class".to_string(),
+                keyword.lexeme.to_owned(),
+            )),
+            ClassType::Class => Err(RloxError::Parse(
+                keyword.line,
+                "cannot use 'super' in a class with no superclass".to_string(),
+                keyword.lexeme.to_owned(),
+            )),
+            ClassType::SubClass => {
+                self.resolve_local(keyword, expr);
+                Ok(())
+            }
+        }
+    }
 }
 
 impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
@@ -251,7 +270,14 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
         self.define(name)?;
 
         if let Some(parent) = parent {
+            self.current_class = ClassType::SubClass;
             parent.accept(self)?;
+
+            self.begin_scope();
+            self.scopes
+                .last_mut()
+                .unwrap()
+                .insert("super".to_string(), true);
         }
 
         self.begin_scope();
@@ -276,6 +302,9 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
         }
 
         self.end_scope();
+        if parent.is_some() {
+            self.end_scope();
+        }
         self.current_class = prev;
 
         Ok(())

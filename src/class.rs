@@ -11,7 +11,9 @@ use crate::{
 pub(crate) enum ClassType {
     None,
     Class,
+    SubClass,
 }
+
 #[derive(Debug, Clone)]
 pub(crate) struct LoxClass {
     name: String,
@@ -99,6 +101,11 @@ lazy_static! {
     pub(crate) static ref THIS: Token = Token {
         token_type: crate::tokens::TokenType::This,
         lexeme: "this".to_string(),
+        ..Token::default()
+    };
+    pub(crate) static ref SUPER: Token = Token {
+        token_type: crate::tokens::TokenType::Super,
+        lexeme: "super".to_string(),
         ..Token::default()
     };
 }
