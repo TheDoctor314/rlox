@@ -229,6 +229,12 @@ impl<'a> Parser<'a> {
 
     fn class_decl(&mut self) -> Result<Stmt> {
         let name = self.must_advance(&[Ident])?;
+        let parent = if self.check_advance(&[Less]).is_some() {
+            Some(Box::new(Expr::Identifier(self.must_advance(&[Ident])?)))
+        } else {
+            None
+        };
+
         self.must_advance(&[LBrace])?;
 
         let mut methods = Vec::new();
@@ -239,7 +245,7 @@ impl<'a> Parser<'a> {
         self.must_advance(&[RBrace])?;
         methods.shrink_to_fit(); // why waste the extra space?
 
-        Ok(Stmt::Class(name, methods))
+        Ok(Stmt::Class(name, parent, methods))
     }
 }
 
