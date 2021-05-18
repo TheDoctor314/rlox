@@ -15,16 +15,31 @@ pub(crate) enum ClassType {
 #[derive(Debug, Clone)]
 pub(crate) struct LoxClass {
     name: String,
+    parent: Option<Rc<LoxClass>>,
     methods: HashMap<String, Callable>,
 }
 
 impl LoxClass {
-    pub(crate) fn new(name: String, methods: HashMap<String, Callable>) -> Self {
-        Self { name, methods }
+    pub(crate) fn new(
+        name: String,
+        parent: Option<Rc<LoxClass>>,
+        methods: HashMap<String, Callable>,
+    ) -> Self {
+        Self {
+            name,
+            parent,
+            methods,
+        }
     }
 
     pub(crate) fn find_method(&self, name: &str) -> Option<&Callable> {
-        self.methods.get(name)
+        if let Some(m) = self.methods.get(name) {
+            return Some(m);
+        } else if let Some(ref p) = self.parent {
+            return p.find_method(name);
+        }
+
+        None
     }
 }
 impl std::fmt::Display for LoxClass {
