@@ -400,6 +400,13 @@ impl<'a> Parser<'a> {
             };
         }
 
+        if let Some(Ok(token)) = self.check_advance(&[Super]) {
+            self.must_advance(&[Dot])?;
+            let method = self.must_advance(&[Ident])?;
+
+            return Ok(Expr::Super(token, method));
+        }
+
         if let Some(Ok(_)) = self.check_advance(&[LParen]) {
             let expr = self.expression()?;
             let _rbrace = self.must_advance(&[RParen]);
