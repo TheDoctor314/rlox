@@ -234,13 +234,25 @@ impl ExprVisitor<Result<Object>> for Interpreter {
 
         let parent = match self.env.get_at(keyword, Some(dist))? {
             Object::Class(ref class) => Rc::clone(class),
-            _ => todo!(),
+            _ => {
+                return Err(RloxError::Runtime(
+                    keyword.line,
+                    "Unexpected 'super'".to_string(),
+                    keyword.lexeme.to_owned(),
+                ));
+            }
         };
 
         // The current object will always be the child
         let inst = match self.env.get_at(&THIS, Some(dist - 1))? {
             Object::Instance(ref i) => i.clone(),
-            _ => todo!(),
+            _ => {
+                return Err(RloxError::Runtime(
+                    keyword.line,
+                    "Unexpected 'this'".to_string(),
+                    keyword.lexeme.to_owned(),
+                ));
+            }
         };
 
         match parent.find_method(&method.lexeme) {

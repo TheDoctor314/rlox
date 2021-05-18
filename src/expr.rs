@@ -16,7 +16,6 @@ pub(crate) enum Expr {
     Super(Token, Token),
 }
 
-// TODO: Add more functions as variants are added to Expr
 pub(crate) trait Visitor<T> {
     fn visit_expr(&mut self, _expr: &Expr) -> T {
         unimplemented!()
