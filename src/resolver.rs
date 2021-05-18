@@ -237,12 +237,22 @@ impl<'a> StmtVisitor<Result<()>> for Resolver<'a> {
         Ok(())
     }
 
-    fn visit_class(&mut self, _stmt: &Stmt, name: &Token, methods: &[Stmt]) -> Result<()> {
+    fn visit_class(
+        &mut self,
+        _stmt: &Stmt,
+        name: &Token,
+        parent: Option<&Expr>,
+        methods: &[Stmt],
+    ) -> Result<()> {
         let prev = self.current_class;
         self.current_class = ClassType::Class;
 
         self.declare(name)?;
         self.define(name)?;
+
+        if let Some(parent) = parent {
+            parent.accept(self)?;
+        }
 
         self.begin_scope();
         self.scopes
