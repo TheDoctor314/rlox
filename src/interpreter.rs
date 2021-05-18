@@ -225,6 +225,33 @@ impl ExprVisitor<Result<Object>> for Interpreter {
     fn visit_this(&mut self, expr: &Expr, token: &Token) -> Result<Object> {
         self.lookup_var(token, expr)
     }
+
+    fn visit_super(&mut self, expr: &Expr, keyword: &Token, method: &Token) -> Result<Object> {
+        let dist = *self
+            .locals
+            .get(expr)
+            .expect("distance should always be available for super");
+
+        let parent = match self.env.get_at(keyword, Some(dist))? {
+            Object::Class(ref class) => Rc::clone(class),
+            _ => todo!(),
+        };
+
+        // The current object will always be the child
+        let inst = match self.env.get_at(&THIS, Some(dist - 1))? {
+            Object::Instance(ref i) => i.clone(),
+            _ => todo!(),
+        };
+
+        match parent.find_method(&method.lexeme) {
+            Some(m) => Ok(Object::Func(m.bind(&inst))),
+            None => Err(RloxError::Runtime(
+                method.line,
+                "Undefined property {}".to_string(),
+                method.lexeme.to_owned(),
+            )),
+        }
+    }
 }
 
 impl StmtVisitor<Result<()>> for Interpreter {
