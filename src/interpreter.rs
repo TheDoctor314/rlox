@@ -1,16 +1,14 @@
 use std::{collections::HashMap, rc::Rc};
 
-use crate::object::Object;
-use crate::stmt::{Stmt, Visitor as StmtVisitor};
-use crate::tokens::Token;
-use crate::{class::LoxClass, functions::Callable};
 use crate::{
+    class::{LoxClass, SUPER, THIS},
     env::Env,
     error::{Result, RloxError},
-};
-use crate::{
     expr::{Expr, Visitor as ExprVisitor},
-    tokens::Literal,
+    functions::Callable,
+    object::Object,
+    stmt::{Stmt, Visitor as StmtVisitor},
+    tokens::{Literal, Token},
 };
 use Object::Literal as ObjLit;
 
@@ -329,8 +327,8 @@ impl StmtVisitor<Result<()>> for Interpreter {
         let env = Env::from(&self.env);
 
         let super_class = if let Some(p) = parent {
-            match p.accept(self)? {
-                Object::Class(ref c) => Some(Rc::clone(c)),
+            let class = match p.accept(self)? {
+                Object::Class(ref c) => Rc::clone(c),
                 _ => {
                     return Err(RloxError::Runtime(
                         name.line,
@@ -338,7 +336,11 @@ impl StmtVisitor<Result<()>> for Interpreter {
                         name.lexeme.to_owned(),
                     ))
                 }
-            }
+            };
+
+            env.define(&SUPER, Object::Class(Rc::clone(&class)))?;
+
+            Some(class)
         } else {
             None
         };
