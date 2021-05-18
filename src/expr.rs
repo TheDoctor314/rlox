@@ -13,6 +13,7 @@ pub(crate) enum Expr {
     Get(Box<Expr>, Token),
     Set(Box<Expr>, Token, Box<Expr>),
     This(Token),
+    Super(Token, Token),
 }
 
 // TODO: Add more functions as variants are added to Expr
@@ -64,6 +65,10 @@ pub(crate) trait Visitor<T> {
     fn visit_this(&mut self, _expr: &Expr, _token: &Token) -> T {
         self.visit_expr(_expr)
     }
+
+    fn visit_super(&mut self, _expr: &Expr, _keyword: &Token, _method: &Token) -> T {
+        self.visit_expr(_expr)
+    }
 }
 
 impl Expr {
@@ -86,6 +91,7 @@ impl Expr {
                 v.visit_set(self, settee.as_ref(), prop, val.as_ref())
             }
             This(ref token) => v.visit_this(self, token),
+            Super(ref token, ref method) => v.visit_super(self, token, method),
         }
     }
 }
@@ -106,6 +112,7 @@ impl std::fmt::Display for Expr {
                 write!(f, "{}.{} = {}", settee.as_ref(), prop, val.as_ref())
             }
             Expr::This(_) => write!(f, "this"),
+            Expr::Super(_, ref method) => write!(f, "super.{}", method.lexeme),
         }
     }
 }
